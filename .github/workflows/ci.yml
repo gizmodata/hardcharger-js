@@ -65,6 +65,7 @@ jobs:
         with:
           name: warp-sql-tarball
           path: .warp-sql/*.tgz
+          include-hidden-files: true # .warp-sql/ is a dot-directory, which upload-artifact leaves out by default
           if-no-files-found: error
           retention-days: 7
 
