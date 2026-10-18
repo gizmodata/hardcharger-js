@@ -6,16 +6,15 @@
 
 import { describe, expect, test } from "vitest";
 
-import { ErrorCode, HardchargerError, defaultPort, parseUrl, toWarpUrl } from "../../src/index.js";
+import { ErrorCode, HardchargerError, defaultPort, parseUrl, schemes } from "../../src/index.js";
 
 describe("accepted URLs", () => {
   test.each([
     ["hardcharger://db.example.com", "https://db.example.com:31337/warp"],
     // An explicit port is kept even when it is HTTPS's default.
     ["hardcharger://db.example.com:443", "https://db.example.com/warp"],
-    // (hardcharger://host:443?tls=false: toWarpUrl keeps the port, below, but warp-sql-js
-    // ef5e84c's parseUrl drops 443 from any http:// URL and dials 80; fixed on its branch
-    // fix/explicit-default-port.)
+    ["hardcharger://db.example.com:443?tls=false", "http://db.example.com:443/warp"],
+    ["hardcharger://[::1]:443?tls=false", "http://[::1]:443/warp"],
     ["hardcharger://db.example.com:80?tls=false", "http://db.example.com/warp"],
     ["hardcharger://db.example.com:", "https://db.example.com:31337/warp"],
     ["hardcharger://db.example.com:8443", "https://db.example.com:8443/warp"],
@@ -42,20 +41,10 @@ describe("accepted URLs", () => {
     expect(parseUrl(url).href).toBe(base);
   });
 
-  test.each([
-    ["hardcharger://h", "https://h:31337"],
-    ["hardcharger://h:4000?tls=false", "http://h:4000"],
-    ["hardcharger://h:443?tls=false", "http://h:443"],
-    ["hardcharger://h/p?tls=false", "http://h:31337/p"],
-    ["hardcharger://h/p?tls=TRUE", "https://h:31337/p"],
-    ["hardcharger://h?x=1&tls=0", "http://h:31337?x=1"],
-    ["hardcharger://[::1]/p", "https://[::1]:31337/p"],
-    ["hardcharger://[::1]:443", "https://[::1]:443"],
-    ["HardCharger://h", "https://h:31337"],
-    ["warp://h", "warp://h"],
-    ["https://h", "https://h"],
-  ])("toWarpUrl(%s) = %s", (url, warpUrl) => {
-    expect(toWarpUrl(url)).toBe(warpUrl);
+  test("schemes: hardcharger:// first, then the Warp SQL client's", () => {
+    expect(Object.keys(schemes)).toEqual(["hardcharger", "warp", "https", "http"]);
+    expect(schemes.hardcharger).toEqual({ tls: true, tlsParameter: true, defaultPort: 31337 });
+    expect(Object.isFrozen(schemes)).toBe(true);
   });
 
   test("the default port is Hardcharger's", () => {

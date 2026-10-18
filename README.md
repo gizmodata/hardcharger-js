@@ -43,7 +43,7 @@ Deno, Bun and Cloudflare Workers, no native code. Its whole API comes through th
 so you never import `@gizmodata/warp-sql` yourself. For a Warp SQL server other than
 Hardcharger, use `@gizmodata/warp-sql` directly.
 
-> **Status: in development, unreleased (0.1.0).** Built on warp-sql-js `ef5e84c`; tested
+> **Status: in development, unreleased (0.1.0).** Built on warp-sql-js `6dea14c`; tested
 > against `hardcharger-server` from Hardcharger's main branch. Not published to npm yet.
 
 | Package                               | What it is                                                              |
@@ -146,9 +146,9 @@ accepts. Refused before anything is sent, each with an `invalid_argument` error 
 - credentials in the URL (pass `username` and `password`), any other URL parameter, a URL
   without a host or with a scheme the client doesn't know.
 
-`toWarpUrl(url)` shows what a URL stands for (`hardcharger://db.example.com` →
-`https://db.example.com:31337`), and `parseUrl(url)` the Warp SQL base URL the client calls
-(`https://db.example.com:31337/warp`); both throw the errors above.
+`parseUrl(url)` shows the Warp SQL base URL a URL stands for (`hardcharger://db.example.com` →
+`https://db.example.com:31337/warp`) and throws the errors above; `schemes` is the scheme map
+`connect` hands the Warp SQL client, which does the parsing.
 
 ## ⚙️ Options
 
@@ -232,7 +232,7 @@ same calls as in Node.
 | `connect(options)`                                                                                                                            | a `Connection` (`HardchargerConnection`): `query`, `stream`, `execute`, `prepare`, `ingest`, `metadata`, `transaction`, `close`, ... |
 | `HardchargerError` (= `WarpSqlError`)                                                                                                         | every error the client raises: `code`, `status`, `sqlstate`, `detail`, `requestId`, ...                                              |
 | `HardchargerErrorCode` (= `ErrorCode`)                                                                                                        | the codes, e.g. `HardchargerErrorCode.sqlError` is `"sql_error"`                                                                     |
-| `toWarpUrl(url)`, `parseUrl(url)`, `scheme`, `defaultPort`                                                                                    | the URL translation above; `"hardcharger"`, `31337`                                                                                  |
+| `parseUrl(url)`, `schemes`, `scheme`, `defaultPort`                                                                                           | the URL translation above; `"hardcharger"`, `31337`                                                                                  |
 | `version`                                                                                                                                     | this package's version                                                                                                               |
 | `Connection`, `PreparedStatement`, `ResultStream`, `Metadata`, `Capability`, `WarpSqlError`, `ErrorCode`                                      | the Warp SQL client's, under their own names                                                                                         |
 | types: `ConnectOptions`, `CallOptions`, `StatementOptions`, `IngestOptions`, `Parameters`, `TlsOptions`, `ColumnInfo`, `ProblemDocument`, ... | the Warp SQL client's types                                                                                                          |

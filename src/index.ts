@@ -23,9 +23,9 @@ import {
   connect as warpConnect,
 } from "@gizmodata/warp-sql";
 
-import { invalidArgument, parseUrl, toWarpUrl } from "./uri.js";
+import { invalidArgument, parseUrl, schemes } from "./uri.js";
 
-export { defaultPort, parseUrl, scheme, toWarpUrl } from "./uri.js";
+export { defaultPort, parseUrl, scheme, schemes } from "./uri.js";
 
 /** This package's version. */
 export const version = "0.1.0";
@@ -72,8 +72,8 @@ export async function connect(options: ConnectOptions): Promise<Connection> {
     );
   }
   parseUrl(options.url); // a bad URL is refused here, in Hardcharger's words, before anything is sent
-  const { authType, logger, url, ...rest } = options;
-  const warpOptions: WarpConnectOptions = { ...rest, url: toWarpUrl(url), logger: logger ?? defaultLogger };
+  const { authType, logger, ...rest } = options;
+  const warpOptions: WarpConnectOptions = { ...rest, schemes, logger: logger ?? defaultLogger };
   if (authType !== undefined) warpOptions.authType = authType === "mtls" ? "client_certificate" : authType;
   return warpConnect(warpOptions);
 }

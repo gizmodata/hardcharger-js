@@ -85,25 +85,25 @@ describe("connect refuses before sending anything", () => {
 });
 
 describe("connect reaches the server it names", () => {
-  test("hardcharger://host is https://host:31337/warp, with the Warp SQL client's requests", async () => {
+  test.each([
+    ["hardcharger://db.example.com", "https://db.example.com:31337/warp"],
+    ["hardcharger://db.example.com:443", "https://db.example.com/warp"],
+    ["hardcharger://db.example.com:443?tls=false", "http://db.example.com:443/warp"],
+    ["hardcharger://db.example.com/custom?tls=false", "http://db.example.com:31337/custom"],
+    ["warp://db.example.com", "https://db.example.com/warp"],
+  ])("%s: the first request goes to %s", async (url, discovery) => {
     const seen: string[] = [];
     const recording: typeof fetch = (input) => {
       seen.push(input instanceof Request ? input.url : String(input));
       return Promise.reject(new TypeError("fetch failed"));
     };
     try {
-      await connect({
-        url: "hardcharger://db.example.com",
-        username: "u",
-        password: "p",
-        fetch: recording,
-        maxAttempts: 1,
-      });
+      await connect({ url, username: "u", password: "p", fetch: recording, maxAttempts: 1 });
       throw new Error("connected");
     } catch (err) {
       expect(HardchargerError.is(err, ErrorCode.transportError)).toBe(true);
     }
-    expect(seen[0]).toBe("https://db.example.com:31337/warp");
+    expect(seen[0]).toBe(discovery);
   });
 });
 

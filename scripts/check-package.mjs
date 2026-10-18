@@ -85,7 +85,7 @@ try {
   probe(
     "module",
     `import * as h from "@gizmodata/hardcharger"; import * as w from "@gizmodata/warp-sql";
-     if (h.HardchargerError !== w.WarpSqlError || h.toWarpUrl("hardcharger://h") !== "https://h:31337") process.exit(1);`,
+     if (h.HardchargerError !== w.WarpSqlError || h.parseUrl("hardcharger://h").href !== "https://h:31337/warp") process.exit(1);`,
   );
 
   if (problems.length > 0) {
