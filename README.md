@@ -16,13 +16,13 @@
   <a href="https://gizmodata.com"><img src="https://img.shields.io/badge/by-GizmoData-f15a24.svg" alt="GizmoData"></a>
 </p>
 
-<h3 align="center">Query Hardcharger from JavaScript and TypeScript: <code>hardcharger://</code> URLs, Arrow back.</h3>
+<h3 align="center">Query Hardcharger™ from JavaScript and TypeScript: <code>hardcharger://</code> URLs, Arrow back.</h3>
 
 ---
 
 ## 🔌 What is it?
 
-The JavaScript/TypeScript client for [Hardcharger](https://github.com/gizmodata/hardcharger),
+The JavaScript/TypeScript client for [Hardcharger™](https://github.com/gizmodata/hardcharger),
 GizmoData's DuckDB 2.0 server. Hardcharger speaks [Warp SQL](https://github.com/gizmodata/warp-sql),
 so this package is a thin layer on the [Warp SQL JavaScript client](https://github.com/gizmodata/warp-sql-js)
 (`@gizmodata/warp-sql`), which it depends on and re-exports, the way
@@ -316,5 +316,6 @@ GizmoData sets up `@gizmodata/hardcharger` there with this repository's `release
 
 <p align="center">
   <a href="https://gizmodata.com"><img src="docs/assets/gizmodata-logo.png" alt="GizmoData" width="56"></a><br>
-  <sub>Built by <a href="https://gizmodata.com">GizmoData</a></sub>
+  <sub>Built by <a href="https://gizmodata.com">GizmoData</a></sub><br>
+  <sub>Hardcharger™ is a trademark of GizmoData LLC.</sub>
 </p>
