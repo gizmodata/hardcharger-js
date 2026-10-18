@@ -134,8 +134,8 @@ jobs:
         run: |
           npm install --no-save apache-arrow@21.2.0
           npm ls apache-arrow @gizmodata/warp-sql
-          [ "$(node -p 'require("apache-arrow/package.json").version')" = 21.2.0 ]
-          [ "$(node -p 'require("@gizmodata/warp-sql/package.json").version')" = 0.1.0 ]
+          [ "$(jq -r .version node_modules/apache-arrow/package.json)" = 21.2.0 ]
+          [ "$(jq -r .version node_modules/@gizmodata/warp-sql/package.json)" = 0.1.0 ]
       - run: npm test
 
   server:
