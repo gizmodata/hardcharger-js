@@ -1,0 +1,9 @@
+package-lock.json
+CHANGELOG.md
+docs/assets/
+node_modules/
+dist/
+coverage/
+test-results/
+playwright-report/
+.warp-sql/

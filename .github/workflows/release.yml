@@ -1,0 +1,109 @@
+name: release
+
+# On a vX.Y.Z tag: the full CI (ci.yml: lint, typecheck, unit tests on every Node, the packed
+# package, live tests, browsers, the README's examples) on the tagged commit itself, then a
+# GitHub Release with the package tarball and the tag's CHANGELOG section, then npm.
+#
+# npm publishing is prepared but off. It uses npm trusted publishing (OIDC: no npm token is
+# stored anywhere) and runs only when the repository variable NPM_PUBLISH_ENABLED is "true".
+# Before turning it on: publish @gizmodata/warp-sql to npm (this package depends on it; the job
+# checks), then on npmjs.com create @gizmodata/hardcharger and under its Settings > Trusted
+# publishing add GitHub Actions with organization gizmodata, repository hardcharger-js,
+# workflow release.yml, environment npm. Create the `npm` environment in this repository (with
+# required reviewers, if wanted).
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+# Its own group: ci.yml, called below, takes `${{ github.workflow }}-${{ github.ref }}`, and in a
+# called workflow github.workflow is this workflow's name, so the same group would deadlock.
+concurrency:
+  group: release-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  tests:
+    uses: ./.github/workflows/ci.yml
+    permissions:
+      contents: read
+      packages: read # the server image the live suites run against
+    secrets: inherit # DEPLOY_KEY_WARP_SQL_JS
+
+  github-release:
+    needs: tests
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - name: The tag matches package.json and src/index.ts, and CHANGELOG.md has its section
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          [ -n "$version" ] && [ "v$version" = "$GITHUB_REF_NAME" ] || { echo "::error::not a vX.Y.Z tag: $GITHUB_REF_NAME"; exit 1; }
+          [ "$(node -p 'require("./package.json").version')" = "$version" ] || { echo "::error::package.json is not $version"; exit 1; }
+          grep -q "^export const version = \"$version\";" src/index.ts || { echo "::error::src/index.ts version is not $version"; exit 1; }
+          grep -q "^## \[$version\]" CHANGELOG.md || { echo "::error::CHANGELOG.md has no section for $version"; exit 1; }
+      - uses: actions/download-artifact@v8
+        with:
+          name: warp-sql-tarball
+          path: .warp-sql
+      - run: npm ci
+      - run: npm run build
+      - run: npm run check:package
+      - run: npm pack
+      - name: Release notes from CHANGELOG
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          awk -v ver="$version" '
+            $0 ~ "^## \\[" ver "\\]" { found=1; next }
+            found && /^## \[/ { exit }
+            found { print }
+          ' CHANGELOG.md > release_notes.md
+          [ -s release_notes.md ] || { echo "::error::CHANGELOG.md has no section for $version"; exit 1; }
+      - uses: softprops/action-gh-release@v3
+        with:
+          files: gizmodata-hardcharger-*.tgz
+          body_path: release_notes.md
+
+  npm:
+    needs: github-release
+    if: vars.NPM_PUBLISH_ENABLED == 'true' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-24.04
+    environment: npm
+    permissions:
+      contents: read
+      id-token: write # npm trusted publishing
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+      - name: npm new enough for trusted publishing
+        run: npm install -g npm@latest && npm --version
+      - name: "@gizmodata/warp-sql is on npm in the range package.json names"
+        run: |
+          range=$(node -p 'require("./package.json").dependencies["@gizmodata/warp-sql"]')
+          found=$(npm view "@gizmodata/warp-sql@$range" version 2>/dev/null | tail -1)
+          [ -n "$found" ] || { echo "::error::@gizmodata/warp-sql@$range is not on npm: publish it first, or this package can't be installed"; exit 1; }
+          echo "@gizmodata/warp-sql@$range: $found"
+      - uses: actions/download-artifact@v8
+        with:
+          name: warp-sql-tarball
+          path: .warp-sql
+      - run: npm ci
+      - run: npm run build
+      - run: npm run check:package
+      # restricted: the package stays private to the npm organization. Making it public is a
+      # decision for GizmoData, not a default.
+      - name: Publish
+        env:
+          HARDCHARGER_JS_RELEASE: "1"
+        run: npm publish --access restricted

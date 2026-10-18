@@ -1,0 +1,246 @@
+name: ci
+
+# Every check, on every push and pull request; also the release gate (release.yml calls it on
+# the tagged commit):
+#   - lint (eslint, prettier, the lock's shape), a real typecheck, unit tests, the build, and the
+#     packed package (this layer only, a few KB: no warp-sql-js code in it);
+#   - unit tests on Node 22, 24 and 26, and on the dependency floors;
+#   - the live suite (Node 22 and 24), the built package in Chromium and WebKit, and the README's
+#     examples, all against hardcharger-server from Hardcharger's main branch.
+#
+# Access, with no personal token:
+#   - gizmodata/warp-sql-js (internal; @gizmodata/warp-sql is not on npm yet) through the
+#     DEPLOY_KEY_WARP_SQL_JS secret, a read-only deploy key of that repository: the warp-sql job
+#     builds the commit in scripts/warp-sql-js.commit and hands the tarball to the other jobs;
+#   - hardcharger-server from the private image ghcr.io/gizmodata/hardcharger, pulled with this
+#     workflow's GITHUB_TOKEN: the package must grant this repository read access (package
+#     settings, Manage Actions access).
+# Without either, the job that needs it fails, and every job after it: nothing is skipped.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+# A newer run on the same branch makes an older one pointless: cancel it. Never on a tag: a
+# release run must finish.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+
+env:
+  # The server the live suites run against: Hardcharger's main branch, which its CI publishes on
+  # every green push. Pin a :sha-<short> tag to reproduce an old run.
+  HARDCHARGER_IMAGE: ghcr.io/gizmodata/hardcharger:main
+
+jobs:
+  warp-sql:
+    name: "@gizmodata/warp-sql (pinned warp-sql-js commit)"
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - name: Deploy key for gizmodata/warp-sql-js
+        env:
+          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY_WARP_SQL_JS }}
+        run: |
+          if [ -z "$DEPLOY_KEY" ]; then
+            echo "::error::the DEPLOY_KEY_WARP_SQL_JS secret is not set: the private key of a read-only deploy key of gizmodata/warp-sql-js"
+            exit 1
+          fi
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          ssh-keyscan -t ed25519 github.com >> ~/.ssh/known_hosts 2>/dev/null
+          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/warp_sql_js && chmod 600 ~/.ssh/warp_sql_js
+          printf 'Host github.com\n  IdentityFile ~/.ssh/warp_sql_js\n  IdentitiesOnly yes\n' >> ~/.ssh/config
+      - name: Build and pack the pinned commit
+        run: scripts/install-warp-sql.sh
+      - uses: actions/upload-artifact@v7
+        with:
+          name: warp-sql-tarball
+          path: .warp-sql/*.tgz
+          if-no-files-found: error
+          retention-days: 7
+
+  checks:
+    name: lint, typecheck, unit tests, package
+    needs: warp-sql
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - uses: actions/download-artifact@v8
+        with:
+          name: warp-sql-tarball
+          path: .warp-sql
+      - run: npm ci
+      - name: Lint (eslint, prettier, the lock's shape)
+        run: npm run lint
+      - name: Typecheck (src, tests and configs)
+        run: npm run typecheck
+      - name: Unit tests
+        run: npm test
+      - name: Build
+        run: npm run build
+      - name: The packed package (this layer only, a few KB; publint, are-the-types-wrong)
+        run: npm run check:package
+
+  node:
+    name: unit tests (Node ${{ matrix.node }})
+    needs: warp-sql
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [22, 24, 26]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ matrix.node }}
+      - uses: actions/download-artifact@v8
+        with:
+          name: warp-sql-tarball
+          path: .warp-sql
+      - run: npm ci
+      - run: npm test
+
+  lowest:
+    name: unit tests on the dependency floors (Node 22.19)
+    needs: warp-sql
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22.19.0
+      - uses: actions/download-artifact@v8
+        with:
+          name: warp-sql-tarball
+          path: .warp-sql
+      - run: npm ci
+      # The floors of package.json's ranges: apache-arrow (peer) 21.2.0, and @gizmodata/warp-sql
+      # 0.1.0 (the tarball; it is the only version so far).
+      - name: Install exactly the floors
+        run: |
+          npm install --no-save apache-arrow@21.2.0
+          npm ls apache-arrow @gizmodata/warp-sql
+          [ "$(node -p 'require("apache-arrow/package.json").version')" = 21.2.0 ]
+          [ "$(node -p 'require("@gizmodata/warp-sql/package.json").version')" = 0.1.0 ]
+      - run: npm test
+
+  server:
+    name: hardcharger-server (main)
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - name: Pull the image and take the server out
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          printf '%s' "$TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin > /dev/null
+          if ! docker pull -q "$HARDCHARGER_IMAGE"; then
+            echo "::error::can't pull $HARDCHARGER_IMAGE with this workflow's GITHUB_TOKEN: grant $GITHUB_REPOSITORY read access to the hardcharger package (package settings, Manage Actions access)"
+            exit 1
+          fi
+          id=$(docker create "$HARDCHARGER_IMAGE")
+          docker cp "$id:/opt/hardcharger" hardcharger
+          docker rm "$id" > /dev/null
+          docker logout ghcr.io > /dev/null
+          hardcharger/bin/hardcharger-server --version
+          tar -czf hardcharger.tar.gz hardcharger
+      - uses: actions/upload-artifact@v7
+        with:
+          name: hardcharger-linux-amd64
+          path: hardcharger.tar.gz
+          retention-days: 3
+
+  live:
+    name: live tests (Node ${{ matrix.node }}, Hardcharger)
+    needs: [warp-sql, server]
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [22, 24]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ matrix.node }}
+      - uses: actions/download-artifact@v8
+        with:
+          name: warp-sql-tarball
+          path: .warp-sql
+      - uses: actions/download-artifact@v8
+        with:
+          name: hardcharger-linux-amd64
+      - name: Unpack the server
+        run: |
+          tar -C "$RUNNER_TEMP" -xzf hardcharger.tar.gz
+          echo "HARDCHARGER_JS_TEST_SERVER_BINARY=$RUNNER_TEMP/hardcharger/bin/hardcharger-server" >> "$GITHUB_ENV"
+      - run: npm ci
+      # Fails without the server, and when no test reached one.
+      - name: Live tests
+        run: npm run test:live
+
+  browser:
+    name: browsers (Chromium, WebKit; Hardcharger)
+    needs: [warp-sql, server]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - uses: actions/download-artifact@v8
+        with:
+          name: warp-sql-tarball
+          path: .warp-sql
+      - uses: actions/download-artifact@v8
+        with:
+          name: hardcharger-linux-amd64
+      - name: Unpack the server
+        run: |
+          tar -C "$RUNNER_TEMP" -xzf hardcharger.tar.gz
+          echo "HARDCHARGER_JS_TEST_SERVER_BINARY=$RUNNER_TEMP/hardcharger/bin/hardcharger-server" >> "$GITHUB_ENV"
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium webkit
+      - run: npm run build
+      - name: Browser tests (the built package, bundled for the browser)
+        run: npm run test:browser
+
+  examples:
+    name: README examples (Hardcharger on 31337)
+    needs: [warp-sql, server]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - uses: actions/download-artifact@v8
+        with:
+          name: warp-sql-tarball
+          path: .warp-sql
+      - uses: actions/download-artifact@v8
+        with:
+          name: hardcharger-linux-amd64
+      - name: Unpack the server
+        run: |
+          tar -C "$RUNNER_TEMP" -xzf hardcharger.tar.gz
+          echo "HARDCHARGER_JS_TEST_SERVER_BINARY=$RUNNER_TEMP/hardcharger/bin/hardcharger-server" >> "$GITHUB_ENV"
+      - run: npm ci
+      - run: npm run build
+      - name: The README's examples, installed from the packed tarball as a user would
+        run: npm run test:examples

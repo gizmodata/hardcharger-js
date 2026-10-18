@@ -1,0 +1,4 @@
+[ { answer: 42, greeting: 'hello' } ]
+streamed 10000000 rows
+{ n: 2n }
+statement_timeout: the operation timed out (its AbortSignal fired)
