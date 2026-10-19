@@ -43,7 +43,7 @@ Deno, Bun and Cloudflare Workers, no native code. Its whole API comes through th
 so you never import `@gizmodata/warp-sql` yourself. For a Warp SQL server other than
 Hardcharger, use `@gizmodata/warp-sql` directly.
 
-> **Status: in development, unreleased (0.1.0).** Built on warp-sql-js `6dea14c`; tested
+> **Status: in development, unreleased (0.1.0).** Built on warp-sql-js `89e707c`; tested
 > against `hardcharger-server` from Hardcharger's main branch. Not published to npm yet.
 
 | Package                               | What it is                                                              |
@@ -161,12 +161,12 @@ defaults (`resultPartitions`, 8 in Node and 4 in browsers; `resultOrder`, `async
 [Warp SQL client's README](https://github.com/gizmodata/warp-sql-js#-connecting) describes
 each one. What differs:
 
-| Option     | Here                                                                                               |
-| ---------- | -------------------------------------------------------------------------------------------------- |
-| `url`      | also `hardcharger://` URLs (above)                                                                 |
-| `authType` | also `"mtls"`, the same as `"client_certificate"` (as in the ADBC and JDBC drivers)                |
-| `schemes`  | not taken: the URL schemes are this package's (use `@gizmodata/warp-sql` for schemes of your own)  |
-| `logger`   | warnings (a session the server lost and the client replaced, say) are printed with `[hardcharger]` |
+| Option     | Here                                                                                                                                 |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `url`      | also `hardcharger://` URLs (above)                                                                                                   |
+| `authType` | also `"mtls"`, the same as `"client_certificate"`, and `"external"`, the same as `"oauth_browser"` (as in the ADBC and JDBC drivers) |
+| `schemes`  | not taken: the URL schemes are this package's (use `@gizmodata/warp-sql` for schemes of your own)                                    |
+| `logger`   | warnings (a session the server lost and the client replaced, say) are printed with `[hardcharger]`                                   |
 
 ## 🪪 Client certificate sign-in (mutual TLS)
 
@@ -214,6 +214,30 @@ with `not_implemented`. The server's refusals keep their codes, each with HTTP 4
 one the user picks from the browser's store, so there are no `tls` options; the
 [Warp SQL client's README](https://github.com/gizmodata/warp-sql-js#-client-certificate-sign-in)
 has the details.
+
+## 🌐 Browser sign-in (SSO)
+
+When hardcharger-server signs people in with an identity provider (`--oauth-client-id`,
+`--oauth-client-secret`, the provider in `--token-allowed-issuer`), `authType: "external"`
+signs in as yourself in a browser. `openUrl` opens (or shows) the sign-in URL; the server
+completes the sign-in with the provider and the client collects Hardcharger's own access token.
+
+```ts
+import { exec } from "node:child_process";
+import { connect } from "@gizmodata/hardcharger";
+
+const conn = await connect({
+  url: "hardcharger://db.example.com",
+  authType: "external",
+  openUrl: (url) => void exec(`open ${JSON.stringify(url)}`),
+});
+```
+
+The steps (`startBrowserSignIn`, `pollBrowserSignIn`, `browserSignIn`) and the helpers for web
+pages that come back to themselves (`beginBrowserRedirectSignIn`, `completeBrowserRedirectSignIn`)
+are the Warp SQL client's, taking `hardcharger://` URLs here; see its
+[README](https://github.com/gizmodata/warp-sql-js#-browser-sign-in-sso). The server's sign-in
+lives on its main port; there is no separate sign-in port.
 
 ## 🖥️ Browsers, Deno, Bun and Workers
 

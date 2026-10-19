@@ -6,6 +6,20 @@ All notable changes to `@gizmodata/hardcharger` are documented here. The format 
 
 ## [Unreleased]
 
+### Added
+
+- Browser sign-in (warp-sql spec §4.3): `authType: "external"` (or `"oauth_browser"`) with
+  `openUrl` signs in with the server's identity provider through a browser, on the server's main
+  port. `startBrowserSignIn`, `pollBrowserSignIn`, `browserSignIn`, `beginBrowserRedirectSignIn`
+  and `completeBrowserRedirectSignIn` take `hardcharger://` URLs; `browserSignInProvider`,
+  `takeBrowserSignInFlowId` and the new error codes come from the Warp SQL client. Unit tests (5)
+  and live tests (2) against `hardcharger-server --oauth-client-id` with a mock OpenID Connect
+  provider (`test/live/idp.ts`).
+
+### Changed
+
+- Built on warp-sql-js `89e707c` (browser sign-in).
+
 ## [0.1.0] - unreleased
 
 ### Added

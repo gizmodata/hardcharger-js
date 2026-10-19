@@ -17,10 +17,20 @@
  */
 
 import {
+  type BrowserSignInFlow,
+  type BrowserSignInPoll,
+  type BrowserSignInResult,
+  type BrowserSignInStorage,
+  type BrowserSignInTarget as WarpBrowserSignInTarget,
   type Connection,
   type ConnectOptions as WarpConnectOptions,
   type Logger,
+  beginBrowserRedirectSignIn as warpBeginBrowserRedirectSignIn,
+  browserSignIn as warpBrowserSignIn,
+  completeBrowserRedirectSignIn as warpCompleteBrowserRedirectSignIn,
   connect as warpConnect,
+  pollBrowserSignIn as warpPollBrowserSignIn,
+  startBrowserSignIn as warpStartBrowserSignIn,
 } from "@gizmodata/warp-sql";
 
 import { invalidArgument, parseUrl, schemes } from "./uri.js";
@@ -33,7 +43,8 @@ export const version = "0.1.0";
 /**
  * `connect`'s options: the Warp SQL client's, with `url` also taking `hardcharger://` URLs and
  * `authType` also taking `"mtls"`, the name the Hardcharger ADBC and JDBC drivers accept for
- * `"client_certificate"`. `schemes` is not taken: the URL schemes are this package's to set.
+ * `"client_certificate"`, and `"external"`, theirs for `"oauth_browser"`. `schemes` is not
+ * taken: the URL schemes are this package's to set.
  */
 export interface ConnectOptions extends Omit<WarpConnectOptions, "schemes" | "authType"> {
   /**
@@ -45,8 +56,12 @@ export interface ConnectOptions extends Omit<WarpConnectOptions, "schemes" | "au
    * `"client_certificate"` (or `"mtls"`): sign in with the TLS client certificate alone, no
    * password (`tls.cert` and `tls.key` in Node, Deno and Bun; the one the user picks in a
    * browser). Default: `"password"` (or whichever credential is given).
+   *
+   * `"external"` (or `"oauth_browser"`): browser sign-in with the server's identity provider
+   * (hardcharger-server with `--oauth-client-id`): `openUrl` opens the sign-in URL, and the
+   * connection waits up to `browserSignInTimeoutMs` (default 5 minutes) for the person.
    */
-  authType?: "password" | "client_certificate" | "mtls";
+  authType?: "password" | "client_certificate" | "mtls" | "external" | "oauth_browser";
 }
 
 /**
@@ -74,8 +89,55 @@ export async function connect(options: ConnectOptions): Promise<Connection> {
   parseUrl(options.url); // a bad URL is refused here, in Hardcharger's words, before anything is sent
   const { authType, logger, ...rest } = options;
   const warpOptions: WarpConnectOptions = { ...rest, schemes, logger: logger ?? defaultLogger };
-  if (authType !== undefined) warpOptions.authType = authType === "mtls" ? "client_certificate" : authType;
+  if (authType !== undefined) {
+    warpOptions.authType =
+      authType === "mtls" ? "client_certificate" : authType === "external" ? "oauth_browser" : authType;
+  }
   return warpConnect(warpOptions);
+}
+
+/** Which server a browser sign-in is for: the Warp SQL client's, with `hardcharger://` URLs. */
+export type BrowserSignInTarget = Omit<WarpBrowserSignInTarget, "schemes">;
+
+function target<T extends BrowserSignInTarget>(options: T): T & { schemes: typeof schemes } {
+  if (options === null || typeof options !== "object") throw invalidArgument("browser sign-in takes an options object");
+  parseUrl(options.url);
+  return { ...options, schemes };
+}
+
+/** Starts a browser sign-in flow (the Warp SQL client's `startBrowserSignIn`, for `hardcharger://` URLs). */
+export async function startBrowserSignIn(
+  options: BrowserSignInTarget & { returnTo?: string },
+): Promise<BrowserSignInFlow> {
+  return warpStartBrowserSignIn(target(options));
+}
+
+/** Polls a browser sign-in flow once; a failed sign-in throws its code. */
+export async function pollBrowserSignIn(
+  options: BrowserSignInTarget & { flow: Pick<BrowserSignInFlow, "flowId" | "pollSecret"> },
+): Promise<BrowserSignInPoll> {
+  return warpPollBrowserSignIn(target(options));
+}
+
+/** The whole browser sign-in: `openUrl` opens the sign-in URL; resolves with the server's access token. */
+export async function browserSignIn(
+  options: BrowserSignInTarget & { openUrl: (url: string) => void | Promise<void>; timeoutMs?: number },
+): Promise<BrowserSignInResult> {
+  return warpBrowserSignIn(target(options));
+}
+
+/** For a web page: starts a flow that comes back to `returnTo` and goes to the identity provider. */
+export async function beginBrowserRedirectSignIn(
+  options: BrowserSignInTarget & { returnTo?: string; storage?: BrowserSignInStorage; assign?: (url: string) => void },
+): Promise<void> {
+  return warpBeginBrowserRedirectSignIn(target(options));
+}
+
+/** For the page the sign-in returned to: collects the token, or undefined when there is none for this tab. */
+export async function completeBrowserRedirectSignIn(
+  options: BrowserSignInTarget & { href?: string; storage?: BrowserSignInStorage; replaceUrl?: (url: string) => void },
+): Promise<BrowserSignInResult | undefined> {
+  return warpCompleteBrowserRedirectSignIn(target(options));
 }
 
 const defaultLogger: Logger = {
@@ -96,9 +158,16 @@ export {
   WarpSqlError,
   WarpSqlError as HardchargerError,
   ErrorCode as HardchargerErrorCode,
+  browserSignInFragmentKey,
+  browserSignInProvider,
+  takeBrowserSignInFlowId,
 } from "@gizmodata/warp-sql";
 export type {
   ArrowInput,
+  BrowserSignInFlow,
+  BrowserSignInPoll,
+  BrowserSignInResult,
+  BrowserSignInStorage,
   CallOptions,
   ColumnInfo,
   DiscoveryDocument,

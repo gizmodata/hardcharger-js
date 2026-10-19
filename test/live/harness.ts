@@ -35,6 +35,8 @@ export interface LaunchOptions {
   args?: string[];
   /** A fixed port instead of a free one. */
   port?: number;
+  /** More environment variables (HARDCHARGER_OAUTH_CLIENT_SECRET, say). */
+  env?: Record<string, string>;
 }
 
 export async function freePort(): Promise<number> {
@@ -66,6 +68,7 @@ export async function launchServer(options: LaunchOptions = {}): Promise<Running
       PATH: process.env.PATH ?? "/usr/bin:/bin",
       HOME: home,
       TMPDIR: home,
+      ...options.env,
       HARDCHARGER_ADMIN_PASSWORD: password,
     },
     stdio: ["ignore", "pipe", "pipe"],

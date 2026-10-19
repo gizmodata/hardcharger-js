@@ -78,6 +78,26 @@ describe("connect refuses before sending anything", () => {
     expect(err.message).toContain("client_certificate");
   });
 
+  // authType "external" is "oauth_browser": the Warp SQL client's refusal proves the alias reached it.
+  test.each(["external", "oauth_browser"])('authType "%s" without openUrl', async (authType) => {
+    const err = await refused({ url: "hardcharger://127.0.0.1", authType, fetch: noNetwork });
+    expect(err.message).toBe(
+      'authType "oauth_browser" needs openUrl, a function that opens (or shows) the sign-in URL',
+    );
+  });
+
+  test('authType "external" with a password', async () => {
+    const err = await refused({
+      url: "hardcharger://127.0.0.1",
+      authType: "external",
+      openUrl: () => {},
+      username: "u",
+      password: "p",
+      fetch: noNetwork,
+    });
+    expect(err.message).toContain('authType "oauth_browser" signs in through the browser');
+  });
+
   test("an unknown authType is the Warp SQL client's refusal", async () => {
     const err = await refused({ url: "hardcharger://127.0.0.1", authType: "kerberos", fetch: noNetwork });
     expect(err.message).toContain("kerberos");
@@ -104,6 +124,45 @@ describe("connect reaches the server it names", () => {
       expect(HardchargerError.is(err, ErrorCode.transportError)).toBe(true);
     }
     expect(seen[0]).toBe(discovery);
+  });
+});
+
+describe("browser sign-in on hardcharger:// URLs", () => {
+  test("a flow goes to the server the URL names, its default port included", async () => {
+    const seen: Array<{ url: string; body: string }> = [];
+    const fake: typeof fetch = (input, init) => {
+      seen.push({
+        url: input instanceof Request ? input.url : input instanceof URL ? input.href : input,
+        body: new TextDecoder().decode(init?.body as Uint8Array),
+      });
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({
+            flow_id: "f_1",
+            poll_secret: "secret",
+            authorize_url: "https://idp.example/authorize",
+            poll_interval_s: 2,
+            expires_at: "2099-01-01T00:00:00Z",
+          }),
+          { status: 201, headers: { "content-type": "application/json" } },
+        ),
+      );
+    };
+    const flow = await hardcharger.startBrowserSignIn({
+      url: "hardcharger://db.example.com",
+      fetch: fake,
+      returnTo: "/ui/",
+    });
+    expect(flow.flowId).toBe("f_1");
+    expect(seen).toEqual([
+      { url: "https://db.example.com:31337/warp/v1/auth/oauth/flows", body: JSON.stringify({ return_to: "/ui/" }) },
+    ]);
+  });
+
+  test("a bad URL is refused in Hardcharger's words, before anything is sent", async () => {
+    await expect(hardcharger.startBrowserSignIn({ url: "hardcharger+http://h", fetch: noNetwork })).rejects.toThrow(
+      "hardcharger://host:port?tls=false",
+    );
   });
 });
 
