@@ -103,10 +103,10 @@ describe("ingest", () => {
     expect(err.sqlstate).toBe("42P01");
   });
 
-  test("an unknown mode is refused before sending (invalid_argument)", async () => {
+  test("an unknown mode is refused before sending (client_invalid_argument)", async () => {
     const err = await rejection(
       conn.ingest("x", tableFromArrays({ id: Int32Array.from([1]) }), { mode: "upsert" as never }),
     );
-    expect(err.code).toBe(ErrorCode.invalidArgument);
+    expect(err.code).toBe(ErrorCode.clientInvalidArgument);
   });
 });

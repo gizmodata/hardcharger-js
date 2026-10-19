@@ -53,13 +53,13 @@ describe("accepted URLs", () => {
   });
 });
 
-/** The invalid_argument error parseUrl throws for this URL. */
+/** The client_invalid_argument error parseUrl throws for this URL. */
 function refusal(url: unknown): HardchargerError {
   try {
     parseUrl(url as string);
   } catch (err) {
     expect(err).toBeInstanceOf(HardchargerError);
-    expect((err as HardchargerError).code).toBe(ErrorCode.invalidArgument);
+    expect((err as HardchargerError).code).toBe(ErrorCode.clientInvalidArgument);
     expect((err as HardchargerError).message.startsWith("[hardcharger] ")).toBe(true);
     return err as HardchargerError;
   }

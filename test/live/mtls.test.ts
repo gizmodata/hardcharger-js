@@ -84,7 +84,7 @@ describe("client certificate sign-in", () => {
     await conn.close();
   });
 
-  test("without the server's CA, the handshake fails: transport_error", async () => {
+  test("without the server's CA, the handshake fails: client_transport_error", async () => {
     reached();
     const err = await rejection(
       connect({
@@ -94,14 +94,14 @@ describe("client certificate sign-in", () => {
         maxAttempts: 1,
       }),
     );
-    expect(err.code).toBe(ErrorCode.transportError);
+    expect(err.code).toBe(ErrorCode.clientTransportError);
   });
 
-  test("certificate sign-in over plain HTTP is refused before sending (invalid_argument)", async () => {
+  test("certificate sign-in over plain HTTP is refused before sending (client_invalid_argument)", async () => {
     const err = await rejection(
       connect({ url: `hardcharger://127.0.0.1:${server.port}?tls=false`, authType: "mtls", ...certificate() }),
     );
-    expect(err.code).toBe(ErrorCode.invalidArgument);
+    expect(err.code).toBe(ErrorCode.clientInvalidArgument);
     expect(err.message).toContain("needs TLS");
   });
 });

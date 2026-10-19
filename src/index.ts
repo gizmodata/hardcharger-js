@@ -33,7 +33,7 @@ import {
   startBrowserSignIn as warpStartBrowserSignIn,
 } from "@gizmodata/warp-sql";
 
-import { invalidArgument, parseUrl, schemes } from "./uri.js";
+import { clientInvalidArgument, parseUrl, schemes } from "./uri.js";
 
 export { defaultPort, parseUrl, scheme, schemes } from "./uri.js";
 
@@ -75,13 +75,13 @@ export interface ConnectOptions extends Omit<WarpConnectOptions, "schemes" | "au
  * server's code in `code`.
  */
 export async function connect(options: ConnectOptions): Promise<Connection> {
-  if (options === null || typeof options !== "object") throw invalidArgument("connect takes an options object");
+  if (options === null || typeof options !== "object") throw clientInvalidArgument("connect takes an options object");
   const given = options as ConnectOptions & { uri?: unknown; schemes?: unknown };
   if (given.url === undefined && given.uri !== undefined) {
-    throw invalidArgument('the option is url, not uri: connect({ url: "hardcharger://host:31337", ... })');
+    throw clientInvalidArgument('the option is url, not uri: connect({ url: "hardcharger://host:31337", ... })');
   }
   if (given.schemes !== undefined) {
-    throw invalidArgument(
+    throw clientInvalidArgument(
       "schemes is set by @gizmodata/hardcharger (hardcharger://, warp://, https://, http://); " +
         "for other schemes use @gizmodata/warp-sql's connect",
     );
@@ -100,7 +100,8 @@ export async function connect(options: ConnectOptions): Promise<Connection> {
 export type BrowserSignInTarget = Omit<WarpBrowserSignInTarget, "schemes">;
 
 function target<T extends BrowserSignInTarget>(options: T): T & { schemes: typeof schemes } {
-  if (options === null || typeof options !== "object") throw invalidArgument("browser sign-in takes an options object");
+  if (options === null || typeof options !== "object")
+    throw clientInvalidArgument("browser sign-in takes an options object");
   parseUrl(options.url);
   return { ...options, schemes };
 }
@@ -169,20 +170,24 @@ export type {
   BrowserSignInResult,
   BrowserSignInStorage,
   CallOptions,
+  CancelReason,
   ColumnInfo,
   DiscoveryDocument,
   IngestOptions,
+  InvalidTokenReason,
   JsonScalar,
   KnownErrorCode,
   Logger,
   MetadataCallOptions,
   Parameters,
   ProblemDocument,
+  ServerInfo,
   SessionDocument,
   SessionEndedReason,
   StatementDocument,
   StatementOptions,
   StatementState,
   TlsOptions,
+  TransactionState,
   WarpSqlErrorInit,
 } from "@gizmodata/warp-sql";

@@ -9,7 +9,7 @@
   <img src="https://img.shields.io/badge/TypeScript-ESM%20%2B%20CJS-3178C6.svg?logo=typescript&logoColor=white" alt="TypeScript, ESM and CJS">
   <img src="https://img.shields.io/badge/Node-%E2%89%A522.19-339933.svg?logo=node.js&logoColor=white" alt="Node 22.19 or later">
   <img src="https://img.shields.io/badge/also-browsers%20%7C%20Deno%20%7C%20Bun%20%7C%20Workers-lightgrey.svg" alt="Browsers, Deno, Bun, Workers">
-  <a href="https://github.com/gizmodata/warp-sql"><img src="https://img.shields.io/badge/protocol-Warp%20SQL-31a8db.svg" alt="Warp SQL protocol"></a>
+  <a href="https://github.com/gizmodata/warp-sql"><img src="https://img.shields.io/badge/protocol-Warp%20SQL%201.0.0-31a8db.svg" alt="Warp SQL protocol"></a>
   <a href="https://github.com/gizmodata/warp-sql-js"><img src="https://img.shields.io/badge/built%20on-Warp%20SQL%20JS-31a8db.svg" alt="Built on the Warp SQL JavaScript client"></a>
   <a href="https://github.com/gizmodata/hardcharger"><img src="https://img.shields.io/badge/server-Hardcharger-f15a24.svg" alt="Hardcharger"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache%202.0-brightgreen.svg" alt="Apache 2.0 license"></a>
@@ -43,8 +43,9 @@ Deno, Bun and Cloudflare Workers, no native code. Its whole API comes through th
 so you never import `@gizmodata/warp-sql` yourself. For a Warp SQL server other than
 Hardcharger, use `@gizmodata/warp-sql` directly.
 
-> **Status: in development, unreleased (0.1.0).** Built on warp-sql-js `89e707c`; tested
-> against `hardcharger-server` from Hardcharger's main branch. Not published to npm yet.
+> **Status: in development, unreleased (0.1.0).** Built on warp-sql-js `4a27d4d` (Warp SQL protocol
+> 1.0.0); tested against `hardcharger-server` from Hardcharger's main branch. Not published to npm
+> yet.
 
 | Package                               | What it is                                                              |
 | ------------------------------------- | ----------------------------------------------------------------------- |
@@ -137,7 +138,7 @@ Once both are published, this is `npm install @gizmodata/hardcharger apache-arro
 
 `hardcharger://` means exactly what Warp SQL's `warp://` means, so TLS is on unless the URL says
 `?tls=false` (or `tls=0`; `true` and `1` keep it on). These are the URLs the ADBC driver
-accepts. Refused before anything is sent, each with an `invalid_argument` error that says why:
+accepts. Refused before anything is sent, each with a `client_invalid_argument` error that says why:
 
 - `hardcharger+http://…` and every other `hardcharger+…` scheme: there is deliberately one
   spelling for plain HTTP, `?tls=false`, the same in every Hardcharger client;
@@ -209,7 +210,7 @@ every connection the client opens (the partitions of a split result, uploads) pr
 client refuses a user name, password or token beside it, a missing `tls.cert` or `tls.key`, and
 a plain-HTTP URL before sending anything, and a server that doesn't offer certificate sign-in
 with `not_implemented`. The server's refusals keep their codes, each with HTTP 401:
-`unknown_certificate_identity`, `client_certificate_required`, `certificate_revoked`,
+`unknown_certificate_identity`, `certificate_required`, `certificate_revoked`,
 `certificate_mismatch` and `certificate_identity_mismatch`. In a browser the certificate is the
 one the user picks from the browser's store, so there are no `tls` options; the
 [Warp SQL client's README](https://github.com/gizmodata/warp-sql-js#-client-certificate-sign-in)
@@ -238,6 +239,12 @@ pages that come back to themselves (`beginBrowserRedirectSignIn`, `completeBrows
 are the Warp SQL client's, taking `hardcharger://` URLs here; see its
 [README](https://github.com/gizmodata/warp-sql-js#-browser-sign-in-sso). The server's sign-in
 lives on its main port; there is no separate sign-in port.
+
+A failed sign-in throws the flow's code (`access_denied` when the person or the provider refused,
+`identity_provider_error`, `invalid_credentials` for a user the server doesn't allow), with no
+HTTP `status`: decide on `code`. A wrong or used-up flow is `flow_not_found`, and a sign-in not
+completed within `browserSignInTimeoutMs` (`timeoutMs` for `browserSignIn`) is
+`client_sign_in_timeout`.
 
 ## 🖥️ Browsers, Deno, Bun and Workers
 
@@ -269,12 +276,18 @@ the retries, split results, cancel and lost sessions.
 
 Every error is a `HardchargerError` with a stable `code`: the server's (`sql_error`,
 `invalid_credentials`, `statement_cancelled`, `statement_timeout`, `permission_denied`, ...) or
-one of the client's (`invalid_argument` before anything is sent, `transport_error` with no HTTP
-answer, `connection_closed`, ...), with `status`, `sqlstate`, `detail` and `requestId` beside it.
+one of the client's, which begin with `client_` (`client_invalid_argument` before anything is
+sent, `client_transport_error` with no HTTP answer, `client_http_error` for an error answer without
+a problem document, `client_connection_closed`, ...), with `status`, `sqlstate`, `detail`,
+`requestId`, `statementId`, `reason` and `cancelReason` beside it. Decide on `code`, never on the
+message. A statement that fails at run time is `execution_error` (422); one cancelled or timed out
+before its submit is answered is `statement_cancelled` or `statement_timeout` (409, with
+`statementId` and `cancelReason`).
 `HardchargerError.is(err, "sql_error")` checks the class and the code at once. The live tests
 assert each code this client meets: `sql_error` (400, with the SQLSTATE), `invalid_credentials`
 (401), `statement_cancelled`, `statement_timeout`, `unknown_certificate_identity` (401),
-`not_implemented`, `transport_error`, `invalid_argument` and `connection_closed`.
+`not_implemented`, `execution_error` (422), `client_transport_error`, `client_invalid_argument` and
+`client_connection_closed`.
 
 The class is the Warp SQL client's, under a Hardcharger name (its `name` stays
 `"WarpSqlError"`): one class, so errors from anywhere in the client are `instanceof` both.

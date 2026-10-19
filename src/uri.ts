@@ -28,7 +28,7 @@ export const schemes: SchemeMap = Object.freeze({
  *     hardcharger://host:port/custom/prefix  the server mounts Warp SQL under /custom/prefix
  *     warp://…, https://…, http://…          the Warp SQL client's own spellings, as they are
  *
- * Refuses, with an `invalid_argument` error: `hardcharger+http://` and other `hardcharger+…`
+ * Refuses, with a `client_invalid_argument` error: `hardcharger+http://` and other `hardcharger+…`
  * schemes (plain HTTP is `?tls=false`), JDBC URLs, `useEncryption`, credentials in the URL,
  * unknown parameters, and anything without a host.
  */
@@ -48,19 +48,19 @@ function refuseForeignSpellings(url: unknown): void {
   if (!match) return;
   const name = match[1]!.toLowerCase();
   if (name.startsWith(`${scheme}+`)) {
-    throw invalidArgument(
+    throw clientInvalidArgument(
       `${match[1]!}:// is not a Hardcharger URI scheme: use hardcharger://host:port for HTTPS, ` +
         `or hardcharger://host:port?tls=false for plain HTTP`,
     );
   }
   if (name === "jdbc") {
-    throw invalidArgument(
+    throw clientInvalidArgument(
       "a JDBC URL is not a Hardcharger URI: drop the jdbc: prefix (hardcharger://host:port), " +
         "and use ?tls=false instead of useEncryption=false",
     );
   }
   if (name === scheme && /[?&]useencryption=/i.test(url)) {
-    throw invalidArgument(
+    throw clientInvalidArgument(
       `invalid url ${redact(url)}: useEncryption is not a hardcharger:// parameter (it is a JDBC property): ` +
         "TLS is on unless the url says ?tls=false",
     );
@@ -69,7 +69,7 @@ function refuseForeignSpellings(url: unknown): void {
 
 /** The Warp SQL client's own refusal, with Hardcharger's prefix and example on its message. */
 function rebrand(err: unknown): unknown {
-  if (!(err instanceof WarpSqlError) || err.code !== ErrorCode.invalidArgument) return err;
+  if (!(err instanceof WarpSqlError) || err.code !== ErrorCode.clientInvalidArgument) return err;
   const message = err.message.replace("e.g. warp://host:port", "e.g. hardcharger://host:31337");
   return err.with({ message: `[hardcharger] ${message}` });
 }
@@ -79,6 +79,6 @@ function redact(url: string): string {
   return url.replace(/\/\/[^/@?#]*@/, "//***@");
 }
 
-export function invalidArgument(message: string): WarpSqlError {
-  return new WarpSqlError({ code: ErrorCode.invalidArgument, message: `[hardcharger] ${message}` });
+export function clientInvalidArgument(message: string): WarpSqlError {
+  return new WarpSqlError({ code: ErrorCode.clientInvalidArgument, message: `[hardcharger] ${message}` });
 }

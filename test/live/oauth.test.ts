@@ -94,8 +94,23 @@ describe("browser sign-in (live, Hardcharger)", () => {
       await (await browse(other.authorizeUrl)).text();
       const err = await rejection(pollBrowserSignIn({ url: server.url, flow: other }));
       expect(err.code).toBe(HardchargerErrorCode.invalidCredentials);
+      expect(err.status).toBeUndefined(); // a failed flow's code; the poll answer itself was a 200
     } finally {
       idp.email = identity;
+    }
+  });
+
+  test("a sign-in the provider refuses is access_denied, with no status", async () => {
+    reached();
+    idp.deny = true;
+    try {
+      const flow = await startBrowserSignIn({ url: server.url });
+      await (await browse(flow.authorizeUrl)).text();
+      const err = await rejection(pollBrowserSignIn({ url: server.url, flow }));
+      expect(err.code).toBe(HardchargerErrorCode.accessDenied);
+      expect(err.status).toBeUndefined();
+    } finally {
+      idp.deny = false;
     }
   });
 });

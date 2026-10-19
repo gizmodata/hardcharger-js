@@ -92,6 +92,17 @@ describe("cancel", () => {
     expect(await scalar(conn, "SELECT 42")).toBe(42);
   });
 
+  // Warp SQL 1.0: a statement stopped before its submit is answered is an error response, 409,
+  // naming the statement and why it stopped, on both submit paths.
+  test.each([false, true])("statementTimeoutMs (async %s): 409 with statementId and cancelReason", async (async) => {
+    const err = await rejection(conn.query(forever, undefined, { statementTimeoutMs: 500, async }));
+    expect(err.code).toBe(ErrorCode.statementTimeout);
+    expect(err.status).toBe(409);
+    expect(err.statementId).toMatch(/\S/);
+    expect(err.cancelReason).toBe("timeout");
+    expect(await scalar(conn, "SELECT 42")).toBe(42);
+  });
+
   test("the uncancelled twin finishes", async () => {
     expect(await scalar(conn, "SELECT count(*) FROM range(1000000)", undefined)).toBe(1000000n);
   });

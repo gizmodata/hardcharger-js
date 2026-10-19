@@ -5,7 +5,14 @@
 
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 
-import { type Connection, ErrorCode, HardchargerError, WarpSqlError, connect } from "../../src/index.js";
+import {
+  type Connection,
+  ErrorCode,
+  HardchargerError,
+  type ServerInfo,
+  WarpSqlError,
+  connect,
+} from "../../src/index.js";
 import { type RunningServer, adminUsername, launchServer, open, reached, rejection, scalar } from "./helpers.js";
 
 let server: RunningServer;
@@ -28,7 +35,28 @@ describe("password sign-in", () => {
     expect(await scalar(conn, "SELECT HARDCHARGER_USER()")).toBe(adminUsername);
     const info = await conn.metadata.serverInfo();
     expect(info.server_name).toBe("Hardcharger");
-    expect(info.protocol).toBe("warp-sql");
+  });
+
+  test("server-info has the Warp SQL 1.0 keys and Hardcharger's prefixed ones", async () => {
+    const info: ServerInfo = await conn.metadata.serverInfo();
+    expect(typeof info.server_version).toBe("string");
+    expect(typeof info.server_arrow_version).toBe("string");
+    expect(info.server_read_only).toBe(false);
+    expect(info.sql_transactions_supported).toBe(true);
+    expect(info.sql_identifier_quote_char).toBe('"');
+    expect(info["duckdb_version"]).toMatch(/^v\d/);
+    expect(info["hardcharger_instance_id"]).toMatch(/^[0-9a-f-]{36}$/);
+    expect(info["hardcharger_access_control"]).toBe(false);
+    for (const gone of [
+      "protocol",
+      "protocol_version",
+      "engine",
+      "engine_version",
+      "read_only",
+      "transactions_supported",
+    ]) {
+      expect(info).not.toHaveProperty(gone);
+    }
   });
 
   test("a wrong password is invalid_credentials (401), beside a right one", async () => {
@@ -49,7 +77,7 @@ describe("password sign-in", () => {
     expect(err.status).toBe(401);
   });
 
-  test("TLS against a plain-HTTP server is a transport_error", async () => {
+  test("TLS against a plain-HTTP server is a client_transport_error", async () => {
     reached();
     const err = await rejection(
       connect({
@@ -59,7 +87,7 @@ describe("password sign-in", () => {
         maxAttempts: 1,
       }),
     );
-    expect(err.code).toBe(ErrorCode.transportError);
+    expect(err.code).toBe(ErrorCode.clientTransportError);
   });
 });
 
@@ -136,6 +164,16 @@ describe("errors", () => {
     expect(await scalar(conn, "SELECT 1")).toBe(1);
   });
 
+  test("a run-time failure is execution_error (422), streamed and async, and the session goes on", async () => {
+    for (const async of [false, true]) {
+      const err = await rejection(conn.query("SELECT error('hardcharger-js boom')", undefined, { async }));
+      expect(err.code).toBe(ErrorCode.executionError);
+      expect(err.status).toBe(422);
+      expect(err.message).toContain("hardcharger-js boom");
+    }
+    expect(await scalar(conn, "SELECT 1")).toBe(1);
+  });
+
   test("a missing table is sql_error with SQLSTATE 42P01", async () => {
     const err = await rejection(conn.query("SELECT * FROM no_such_table"));
     expect(err.code).toBe(ErrorCode.sqlError);
@@ -149,10 +187,10 @@ describe("errors", () => {
     expect(err.status).toBe(400);
   });
 
-  test("a closed connection is connection_closed", async () => {
+  test("a closed connection is client_connection_closed", async () => {
     const other = await open(server);
     await other.close();
     const err = await rejection(other.query("SELECT 1"));
-    expect(err.code).toBe(ErrorCode.connectionClosed);
+    expect(err.code).toBe(ErrorCode.clientConnectionClosed);
   });
 });

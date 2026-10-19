@@ -47,5 +47,5 @@ test("warp://127.0.0.1?tls=false does not: its default port is 80", async () => 
   const err = await rejection(
     connect({ url: "warp://127.0.0.1?tls=false", username: adminUsername, password: server.password, maxAttempts: 1 }),
   );
-  expect(err.code).toBe(ErrorCode.transportError);
+  expect(err.code).toBe(ErrorCode.clientTransportError);
 });

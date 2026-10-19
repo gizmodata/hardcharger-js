@@ -80,5 +80,7 @@ test("a hardcharger+http:// URL is refused in the browser too", async ({ page })
       return `${(err as { code: string }).code}: ${(err as Error).message}`;
     }
   });
-  expect(message).toContain("invalid_argument: [hardcharger] hardcharger+http:// is not a Hardcharger URI scheme");
+  expect(message).toContain(
+    "client_invalid_argument: [hardcharger] hardcharger+http:// is not a Hardcharger URI scheme",
+  );
 });

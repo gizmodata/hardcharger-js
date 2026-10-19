@@ -21,7 +21,7 @@ async function refused(options: unknown): Promise<HardchargerError> {
     await connect(options as ConnectOptions);
   } catch (err) {
     expect(err).toBeInstanceOf(HardchargerError);
-    expect((err as HardchargerError).code).toBe(ErrorCode.invalidArgument);
+    expect((err as HardchargerError).code).toBe(ErrorCode.clientInvalidArgument);
     return err as HardchargerError;
   }
   throw new Error("connect did not refuse");
@@ -121,7 +121,7 @@ describe("connect reaches the server it names", () => {
       await connect({ url, username: "u", password: "p", fetch: recording, maxAttempts: 1 });
       throw new Error("connected");
     } catch (err) {
-      expect(HardchargerError.is(err, ErrorCode.transportError)).toBe(true);
+      expect(HardchargerError.is(err, ErrorCode.clientTransportError)).toBe(true);
     }
     expect(seen[0]).toBe(discovery);
   });
@@ -164,6 +164,75 @@ describe("browser sign-in on hardcharger:// URLs", () => {
       "hardcharger://host:port?tls=false",
     );
   });
+
+  /** A server whose flow polls answer `poll` (and whose flow creation answers a 2 s interval). */
+  const flowServer =
+    (poll: Record<string, unknown>): typeof fetch =>
+    (input) => {
+      const url = input instanceof Request ? input.url : input instanceof URL ? input.href : input;
+      const body = url.endsWith("/flows")
+        ? {
+            flow_id: "f_1",
+            poll_secret: "secret",
+            authorize_url: "https://idp.example/authorize",
+            poll_interval_s: 2,
+            expires_at: "2099-01-01T00:00:00Z",
+          }
+        : poll;
+      return Promise.resolve(
+        new Response(JSON.stringify(body), {
+          status: url.endsWith("/flows") ? 201 : 200,
+          headers: { "content-type": "application/json" },
+        }),
+      );
+    };
+  const flow = { flowId: "f_1", pollSecret: "secret" };
+
+  async function pollRejection(poll: Record<string, unknown>): Promise<HardchargerError> {
+    try {
+      await hardcharger.pollBrowserSignIn({ url: "hardcharger://db.example.com", fetch: flowServer(poll), flow });
+    } catch (err) {
+      expect(err).toBeInstanceOf(HardchargerError);
+      return err as HardchargerError;
+    }
+    throw new Error("the poll did not fail");
+  }
+
+  test("a failed flow throws its error.code, with no HTTP status (the poll answer was a 200)", async () => {
+    for (const code of [ErrorCode.accessDenied, ErrorCode.identityProviderError, ErrorCode.invalidCredentials]) {
+      const err = await pollRejection({ state: "failed", error: { code, detail: "no" } });
+      expect(err.code).toBe(code);
+      expect(err.status).toBeUndefined();
+    }
+  });
+
+  test("a failed flow without error.code is client_protocol_error", async () => {
+    expect((await pollRejection({ state: "failed", error: {} })).code).toBe(ErrorCode.clientProtocolError);
+  });
+
+  test("a flow state the client doesn't know keeps polling", async () => {
+    const poll = await hardcharger.pollBrowserSignIn({
+      url: "hardcharger://db.example.com",
+      fetch: flowServer({ state: "awaiting_second_factor" }),
+      flow,
+    });
+    expect(poll.state).toBe("pending");
+  });
+
+  test("a sign-in not completed in time is client_sign_in_timeout", async () => {
+    const opened: string[] = [];
+    const err = await hardcharger
+      .browserSignIn({
+        url: "hardcharger://db.example.com",
+        fetch: flowServer({ state: "pending" }),
+        openUrl: (url) => void opened.push(url),
+        timeoutMs: 50,
+      })
+      .catch((e: unknown) => e);
+    expect(HardchargerError.is(err, ErrorCode.clientSignInTimeout)).toBe(true);
+    expect((err as HardchargerError).status).toBeUndefined();
+    expect(opened).toEqual(["https://idp.example/authorize"]);
+  });
 });
 
 describe("the package's surface", () => {
@@ -178,10 +247,42 @@ describe("the package's surface", () => {
     expect(hardcharger.connect).not.toBe(warp.connect);
   });
 
-  test("every value the Warp SQL client exports is here, but its connect, parseUrl and defaultSchemes", () => {
-    const own = new Set(["connect", "parseUrl", "defaultSchemes"]); // replaced by Hardcharger's
+  test("every value the Warp SQL client exports is here, but its connect, parseUrl, defaultSchemes and version", () => {
+    const own = new Set(["connect", "parseUrl", "defaultSchemes", "version"]); // replaced by Hardcharger's
     const missing = Object.keys(warp).filter((name) => !own.has(name) && !(name in hardcharger));
     expect(missing).toEqual([]);
+  });
+
+  test("the client's own codes begin with client_ (Warp SQL 1.0), and the server's keep theirs", () => {
+    const codes = hardcharger.HardchargerErrorCode;
+    expect(codes.clientInvalidArgument).toBe("client_invalid_argument");
+    expect(codes.clientTransportError).toBe("client_transport_error");
+    expect(codes.clientProtocolError).toBe("client_protocol_error");
+    expect(codes.clientHttpError).toBe("client_http_error");
+    expect(codes.clientIncompleteStream).toBe("client_incomplete_stream");
+    expect(codes.clientResultBufferExceeded).toBe("client_result_buffer_exceeded");
+    expect(codes.clientConnectionClosed).toBe("client_connection_closed");
+    expect(codes.certificateRequired).toBe("certificate_required");
+    expect(codes.statementNotFound).toBe("statement_not_found");
+    expect(codes.partitionNotFound).toBe("partition_not_found");
+    expect(codes.internalError).toBe("internal_error");
+    expect(codes.clientSignInTimeout).toBe("client_sign_in_timeout");
+    expect(codes.flowNotFound).toBe("flow_not_found");
+    expect(codes.invalidReturnTo).toBe("invalid_return_to");
+    expect(codes.accessDenied).toBe("access_denied");
+    expect(codes.identityProviderError).toBe("identity_provider_error");
+    for (const gone of [
+      "invalidArgument",
+      "transportError",
+      "protocolError",
+      "connectionClosed",
+      "clientCertificateRequired",
+    ]) {
+      expect(codes, gone).not.toHaveProperty(gone);
+    }
+    expect(hardcharger.Capability).not.toHaveProperty("resultRetention");
+    expect(hardcharger.Capability).not.toHaveProperty("partitionedResults");
+    expect(hardcharger.Capability.resultLocations).toBe("result_locations");
   });
 
   test("the version is package.json's", () => {
