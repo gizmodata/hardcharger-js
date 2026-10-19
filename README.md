@@ -1,6 +1,9 @@
 <p align="center">
   <a href="https://github.com/gizmodata/hardcharger">
-    <img src="docs/assets/hardcharger-js-banner.svg" alt="Hardcharger JS: hardcharger:// from Node and browsers. By GizmoData™." width="100%">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/assets/hardcharger-banner-dark.png">
+      <img src="docs/assets/hardcharger-banner-light.png" alt="Hardcharger™" width="400">
+    </picture>
   </a>
 </p>
 
