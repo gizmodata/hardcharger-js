@@ -46,7 +46,7 @@ Deno, Bun and Cloudflare Workers, no native code. Its whole API comes through th
 so you never import `@gizmodata/warp-sql` yourself. For a Warp SQL server other than
 Hardcharger, use `@gizmodata/warp-sql` directly.
 
-> **Status: in development, unreleased (0.1.0).** Built on warp-sql-js `4a27d4d` (Warp SQL protocol
+> **Status: in development, unreleased (0.1.0).** Built on warp-sql-js `07947a2` (Warp SQL protocol
 > 1.0.0); tested against `hardcharger-server` from Hardcharger's main branch. Not published to npm
 > yet.
 

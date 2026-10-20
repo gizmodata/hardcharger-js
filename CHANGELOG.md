@@ -24,8 +24,11 @@ All notable changes to `@gizmodata/hardcharger` are documented here. The format 
 
 ### Changed
 
-- Built on warp-sql-js `4a27d4d`, the client for Warp SQL protocol 1.0.0 with browser sign-in (was
-  `89e707c`).
+- Built on warp-sql-js `07947a2`, the client for Warp SQL protocol 1.0.0 with browser sign-in (was
+  `89e707c`). From it: `ipcCompression` takes `"lz4_frame"` (a decoder loaded only when used) and
+  `"auto"` (lz4_frame on a round trip under 10 ms, else zstd); uploads from bundled browser apps
+  work (the encoder no longer needs apache-arrow's `throughDOM`); and `close()` waits for the
+  deletes of finished statements before it ends the session.
 - **Breaking:** the client's own error codes begin with `client_`, as the protocol now requires:
   the URL and `connect` refusals are `client_invalid_argument`
   (`HardchargerErrorCode.clientInvalidArgument`), and the re-exported codes are
@@ -48,6 +51,13 @@ All notable changes to `@gizmodata/hardcharger` are documented here. The format 
   code (`access_denied`, `identity_provider_error`, `invalid_credentials`, ...) with no `status`
   (was 401); a failed flow without a code is `client_protocol_error`; a flow state the client
   doesn't know keeps polling. The README says so.
+
+### Fixed
+
+- Tests: the default-port suite checks that port 31337 is free on 0.0.0.0 as well as 127.0.0.1.
+  On macOS a server listening on all addresses doesn't stop a bind to 127.0.0.1, so the suite
+  started, reached the other server and failed on its password instead of saying the port was in
+  use.
 
 ### Documentation
 

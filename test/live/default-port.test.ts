@@ -12,12 +12,18 @@ import { type RunningServer, adminUsername, launchServer, reached, rejection, sc
 
 let server: RunningServer;
 
+// Both addresses: on macOS a listener on 0.0.0.0 doesn't stop a bind to 127.0.0.1 (nor the
+// other way round), and the test would then reach the other server and fail on its password.
 async function portFree(port: number): Promise<boolean> {
-  return new Promise((resolve) => {
-    const probe = createServer();
-    probe.once("error", () => resolve(false));
-    probe.listen(port, "127.0.0.1", () => probe.close(() => resolve(true)));
-  });
+  for (const host of ["127.0.0.1", "0.0.0.0"]) {
+    const free = await new Promise<boolean>((resolve) => {
+      const probe = createServer();
+      probe.once("error", () => resolve(false));
+      probe.listen(port, host, () => probe.close(() => resolve(true)));
+    });
+    if (!free) return false;
+  }
+  return true;
 }
 
 beforeAll(async () => {
