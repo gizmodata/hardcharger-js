@@ -76,20 +76,27 @@ async function startServer(home, args) {
   };
 }
 
-/** A new project, with the packages installed by the README's own `npm install` line. */
+/**
+ * A new project, with the packages the README's own `npm install` line names, installed from
+ * this checkout's packed tarballs instead of the registry: @gizmodata/hardcharger as `npm pack`
+ * makes it, and @gizmodata/warp-sql from .warp-sql/ (installed in the same command, so the
+ * hardcharger package's dependency on it resolves to that tarball, not to npm).
+ */
 function consumerProject(dir) {
-  const install = /^npm install apache-arrow \.\/gizmodata-warp-sql-[^\n]*$/m.exec(readme);
-  if (!install) fail("README.md has no `npm install apache-arrow ./gizmodata-warp-sql-…` line");
+  const install = /^npm install @gizmodata\/hardcharger apache-arrow$/m.exec(readme);
+  if (!install) fail("README.md has no `npm install @gizmodata/hardcharger apache-arrow` line");
   const warpTarball = readdirSync(join(root, ".warp-sql")).find((name) => name.endsWith(".tgz"));
   if (!warpTarball) fail(".warp-sql/ has no tarball: run `npm run warp-sql`");
   copyFileSync(join(root, ".warp-sql", warpTarball), join(dir, warpTarball));
-  execFileSync("npm", ["pack", "--silent", "--pack-destination", dir], {
-    cwd: root,
-    stdio: ["ignore", "ignore", "inherit"],
-  });
+  const [packed] = JSON.parse(
+    execFileSync("npm", ["pack", "--json", "--pack-destination", dir], { cwd: root, encoding: "utf8" }),
+  );
   writeFileSync(join(dir, "package.json"), JSON.stringify({ name: "readme-examples", private: true, type: "module" }));
-  console.log(`$ ${install[0]}`);
-  execFileSync("sh", ["-c", install[0]], { cwd: dir, stdio: "inherit" });
+  console.log(`$ ${install[0]}  (from ./${packed.filename} and ./${warpTarball})`);
+  execFileSync("npm", ["install", "apache-arrow", `./${warpTarball}`, `./${packed.filename}`], {
+    cwd: dir,
+    stdio: "inherit",
+  });
   for (const name of readdirSync(join(root, "examples")).filter((n) => n.endsWith(".mjs"))) {
     copyFileSync(join(root, "examples", name), join(dir, name));
   }

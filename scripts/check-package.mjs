@@ -28,7 +28,7 @@ try {
   };
   walk(pkgDir);
 
-  const allowed = /^(dist\/index\.(mjs|cjs|d\.mts|d\.cts)|README\.md|CHANGELOG\.md|LICENSE|package\.json)$/;
+  const allowed = /^(dist\/index\.(mjs|cjs|d\.mts|d\.cts)|README\.md|CHANGELOG\.md|LICENSE|NOTICE|package\.json)$/;
   for (const file of files) if (!allowed.test(file)) problems.push(`unexpected file in the package: ${file}`);
   const distBytes = files.filter((f) => f.startsWith("dist/")).reduce((n, f) => n + statSync(join(pkgDir, f)).size, 0);
   if (distBytes > maxDistBytes)
