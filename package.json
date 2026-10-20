@@ -1,7 +1,7 @@
 {
   "name": "@gizmodata/hardcharger",
-  "version": "0.1.0",
-  "description": "JavaScript/TypeScript client for Hardcharger™, GizmoData™'s DuckDB 2.0 server: hardcharger:// URLs on the Warp SQL client, for Node, browsers, Deno, Bun and edge runtimes.",
+  "version": "2.0.0",
+  "description": "JavaScript/TypeScript client for Hardcharger\u2122, GizmoData\u2122's DuckDB 2.0 server: hardcharger:// URLs on the Warp SQL client, for Node, browsers, Deno, Bun and edge runtimes.",
   "author": "GizmoData LLC",
   "license": "Apache-2.0",
   "type": "module",
@@ -19,6 +19,9 @@
     "apache-arrow",
     "sql"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "sideEffects": false,
   "exports": {
     ".": {
@@ -62,7 +65,7 @@
     "apache-arrow": "^21.2.0"
   },
   "dependencies": {
-    "@gizmodata/warp-sql": "^0.1.0"
+    "@gizmodata/warp-sql": "^1.0.0"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.5",

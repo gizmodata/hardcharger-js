@@ -6,8 +6,36 @@ All notable changes to `@gizmodata/hardcharger` are documented here. The format 
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-10-20
+
+The first release, with Hardcharger 2.0.0: the client for the Warp SQL protocol 1.0.0, on
+`@gizmodata/warp-sql` 1.0.0 (warp-sql-js `903feb4`). Earlier builds (0.1.0) were never published;
+the Changed and Fixed entries describe what moved since them, for anyone who installed one from git.
+<!-- Set the date above at tag time. -->
+
 ### Added
 
+- `@gizmodata/hardcharger`, the JavaScript/TypeScript client for Hardcharger: a thin layer on
+  the Warp SQL client `@gizmodata/warp-sql` (a dependency, `^1.0.0`), for Node 22.19+, browsers,
+  Deno, Bun and edge runtimes, as ESM and CJS.
+- `connect({ url: "hardcharger://host[:port][/prefix][?tls=false]", ... })`: HTTPS to port 31337
+  unless the URL says otherwise, as in the Hardcharger ADBC driver; `warp://`, `https://` and
+  `http://` URLs pass through. `hardcharger+http://` and other `hardcharger+…` schemes, JDBC URLs,
+  `useEncryption`, credentials and unknown parameters are refused before anything is sent, with
+  `invalid_argument` errors that say what to write instead. `parseUrl` shows what a URL stands
+  for. The Warp SQL client parses the URL (`schemes`), so an explicit port is kept, `:443` on
+  plain HTTP included (warp-sql-js `3578476`).
+- `authType: "mtls"`, the ADBC and JDBC drivers' name for `"client_certificate"` (client
+  certificate sign-in).
+- The Warp SQL client's whole API, re-exported, with Hardcharger names for its classes:
+  `HardchargerError` (= `WarpSqlError`), `HardchargerErrorCode` (= `ErrorCode`) and
+  `HardchargerConnection` (= `Connection`).
+- Tests: unit tests for every URL form; live tests against `hardcharger-server` (password and
+  client certificate sign-in, queries, bind parameters, split results, ingest, transactions,
+  cancel, the default port, error codes); the built package in Chromium and WebKit; the
+  README's examples, installed from the packed tarball. CI on Node 22, 24 and 26, and a release
+  workflow that runs it all on the tagged commit before a GitHub Release and npm (trusted
+  publishing).
 - Browser sign-in (warp-sql spec §4.3): `authType: "external"` (or `"oauth_browser"`) with
   `openUrl` signs in with the server's identity provider through a browser, on the server's main
   port. `startBrowserSignIn`, `pollBrowserSignIn`, `browserSignIn`, `beginBrowserRedirectSignIn`
@@ -24,8 +52,8 @@ All notable changes to `@gizmodata/hardcharger` are documented here. The format 
 
 ### Changed
 
-- Built on warp-sql-js `07947a2`, the client for Warp SQL protocol 1.0.0 with browser sign-in (was
-  `89e707c`). From it: `ipcCompression` takes `"lz4_frame"` (a decoder loaded only when used) and
+- Built on `@gizmodata/warp-sql` 1.0.0 (warp-sql-js `903feb4`), the client for Warp SQL protocol
+  1.0.0 with browser sign-in (was `89e707c`). From it: `ipcCompression` takes `"lz4_frame"` (a decoder loaded only when used) and
   `"auto"` (lz4_frame on a round trip under 10 ms, else zstd); uploads from bundled browser apps
   work (the encoder no longer needs apache-arrow's `throughDOM`); and `close()` waits for the
   deletes of finished statements before it ends the session.
@@ -63,30 +91,3 @@ All notable changes to `@gizmodata/hardcharger` are documented here. The format 
 
 - The README banner is the new Hardcharger™ logo, the bull mascot lockup in a light and a dark
   version that follows the reader's color scheme, in place of the GizmoData banner card.
-
-## [0.1.0] - unreleased
-
-### Added
-
-- `@gizmodata/hardcharger`, the JavaScript/TypeScript client for Hardcharger: a thin layer on
-  the Warp SQL client `@gizmodata/warp-sql` (a dependency, `^0.1.0`; built from warp-sql-js
-  `6dea14c` until it is on npm), for Node 22.19+, browsers, Deno, Bun and edge runtimes, as ESM
-  and CJS.
-- `connect({ url: "hardcharger://host[:port][/prefix][?tls=false]", ... })`: HTTPS to port 31337
-  unless the URL says otherwise, as in the Hardcharger ADBC driver; `warp://`, `https://` and
-  `http://` URLs pass through. `hardcharger+http://` and other `hardcharger+…` schemes, JDBC URLs,
-  `useEncryption`, credentials and unknown parameters are refused before anything is sent, with
-  `invalid_argument` errors that say what to write instead. `parseUrl` shows what a URL stands
-  for. The Warp SQL client parses the URL (`schemes`), so an explicit port is kept, `:443` on
-  plain HTTP included (warp-sql-js `3578476`).
-- `authType: "mtls"`, the ADBC and JDBC drivers' name for `"client_certificate"` (client
-  certificate sign-in).
-- The Warp SQL client's whole API, re-exported, with Hardcharger names for its classes:
-  `HardchargerError` (= `WarpSqlError`), `HardchargerErrorCode` (= `ErrorCode`) and
-  `HardchargerConnection` (= `Connection`).
-- Tests: unit tests for every URL form; live tests against `hardcharger-server` (password and
-  client certificate sign-in, queries, bind parameters, split results, ingest, transactions,
-  cancel, the default port, error codes); the built package in Chromium and WebKit; the
-  README's examples, installed from the packed tarball. CI on Node 22, 24 and 26, and a release
-  workflow that runs it all on the tagged commit before a GitHub Release (npm publishing
-  prepared, off).

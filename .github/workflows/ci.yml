@@ -9,12 +9,14 @@ name: ci
 #     examples, all against hardcharger-server from Hardcharger's main branch.
 #
 # Access, with no personal token:
-#   - gizmodata/warp-sql-js (internal; @gizmodata/warp-sql is not on npm yet) through the
-#     DEPLOY_KEY_WARP_SQL_JS secret, a read-only deploy key of that repository: the warp-sql job
-#     builds the commit in scripts/warp-sql-js.commit and hands the tarball to the other jobs;
-#   - hardcharger-server from the private image ghcr.io/gizmodata/hardcharger, pulled with this
-#     workflow's GITHUB_TOKEN: the package must grant this repository read access (package
-#     settings, Manage Actions access).
+#   - gizmodata/warp-sql-js through the DEPLOY_KEY_WARP_SQL_JS secret, a read-only deploy key
+#     of that repository (needed while that repository is private; a plain clone once it is
+#     public): the warp-sql job builds the commit in scripts/warp-sql-js.commit and hands the
+#     tarball to the other jobs, so a run tests the pinned client, never a published version;
+#   - hardcharger-server from the image ghcr.io/gizmodata/hardcharger, pulled with this
+#     workflow's GITHUB_TOKEN. While the image is private the package must grant this
+#     repository read access (package settings, Manage Actions access); once it is public the
+#     login is unnecessary but harmless.
 # Without either, the job that needs it fails, and every job after it: nothing is skipped.
 
 on:
@@ -129,13 +131,13 @@ jobs:
           path: .warp-sql
       - run: npm ci
       # The floors of package.json's ranges: apache-arrow (peer) 21.2.0, and @gizmodata/warp-sql
-      # 0.1.0 (the tarball; it is the only version so far).
+      # 1.0.0 (the tarball, built from the pinned commit).
       - name: Install exactly the floors
         run: |
           npm install --no-save apache-arrow@21.2.0
           npm ls apache-arrow @gizmodata/warp-sql
           [ "$(jq -r .version node_modules/apache-arrow/package.json)" = 21.2.0 ]
-          [ "$(jq -r .version node_modules/@gizmodata/warp-sql/package.json)" = 0.1.0 ]
+          [ "$(jq -r .version node_modules/@gizmodata/warp-sql/package.json)" = 1.0.0 ]
       - run: npm test
 
   server:

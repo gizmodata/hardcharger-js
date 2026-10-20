@@ -46,9 +46,9 @@ Deno, Bun and Cloudflare Workers, no native code. Its whole API comes through th
 so you never import `@gizmodata/warp-sql` yourself. For a Warp SQL server other than
 Hardcharger, use `@gizmodata/warp-sql` directly.
 
-> **Status: in development, unreleased (0.1.0).** Built on warp-sql-js `07947a2` (Warp SQL protocol
-> 1.0.0); tested against `hardcharger-server` from Hardcharger's main branch. Not published to npm
-> yet.
+> **Status: 2.0.0, with Hardcharger 2.0.0.** Built on `@gizmodata/warp-sql` 1.0.0 (warp-sql-js
+> `903feb4`, Warp SQL protocol 1.0.0); tested against `hardcharger-server` from Hardcharger's main
+> branch.
 
 | Package                               | What it is                                                              |
 | ------------------------------------- | ----------------------------------------------------------------------- |
@@ -119,15 +119,12 @@ Results are [Apache Arrow](https://arrow.apache.org/docs/js/) Tables and RecordB
 
 ## 📦 Installing
 
-Not on npm yet. Until it is, build the package from this repository and install the tarball;
-`@gizmodata/warp-sql` isn't on npm either, so install its tarball too (see
-[Building and testing](#%EF%B8%8F-building-and-testing)):
-
 ```bash
-npm install apache-arrow ./gizmodata-warp-sql-0.1.0.tgz ./gizmodata-hardcharger-0.1.0.tgz
+npm install @gizmodata/hardcharger apache-arrow
 ```
 
-Once both are published, this is `npm install @gizmodata/hardcharger apache-arrow`.
+`@gizmodata/warp-sql` comes with it; `apache-arrow` (21.2 or later) is a peer dependency, so your
+application and the client share one copy of Arrow's classes.
 
 ## 🔗 URLs
 
@@ -297,11 +294,12 @@ The class is the Warp SQL client's, under a Hardcharger name (its `name` stays
 
 ## 🛠️ Building and testing
 
-Node 22.19 or later. `@gizmodata/warp-sql` isn't on npm yet, so it is built from
+Node 22.19 or later. For development and CI, `@gizmodata/warp-sql` is built from
 [gizmodata/warp-sql-js](https://github.com/gizmodata/warp-sql-js) at the commit pinned in
 [scripts/warp-sql-js.commit](scripts/warp-sql-js.commit) and packed to `.warp-sql/`, where
-`package-lock.json` finds it. `package.json`, and so the published package, names the npm
-package and its range (`^0.1.0`); the tarball is a stand-in for development and CI only.
+`package-lock.json` finds it, so the tests run against that exact client. `package.json`, and so
+the published package, names the npm package and its range (`^1.0.0`); the tarball is a stand-in
+for development and CI only.
 
 ```bash
 npm run warp-sql        # clone warp-sql-js (git access needed), build and pack the pinned commit
@@ -332,21 +330,22 @@ npm run build && npm run test:examples   # this README's examples, on port 31337
 ```
 
 Negative tests assert the error code, each beside a positive twin. CI runs everything against
-the image of Hardcharger's main branch (`ghcr.io/gizmodata/hardcharger:main`, private), pulled
-with the workflow's `GITHUB_TOKEN`; the package must grant this repository read access
-(package settings, "Manage Actions access"), or the live jobs fail. While warp-sql-js is
-internal, CI clones it with `DEPLOY_KEY_WARP_SQL_JS`, a read-only deploy key of that repository.
+the image of Hardcharger's main branch (`ghcr.io/gizmodata/hardcharger:main`), pulled with the
+workflow's `GITHUB_TOKEN`; while the image is private the package must grant this repository
+read access (package settings, "Manage Actions access"), or the live jobs fail. CI clones
+warp-sql-js with `DEPLOY_KEY_WARP_SQL_JS`, a read-only deploy key of that repository (needed
+while it is private).
 
 ## 📦 Releasing
 
 Releases follow [semantic versioning](https://semver.org) and [CHANGELOG.md](CHANGELOG.md):
 update both and `package.json`'s version, commit, and push `main` and `vX.Y.Z` together.
 `release.yml` runs the full CI on the tagged commit, then makes a GitHub Release with the
-package tarball and the CHANGELOG section, then (once enabled) publishes to npm with trusted
-publishing (OIDC, no stored token). Publishing is off until `@gizmodata/warp-sql` is on npm,
-GizmoData sets up `@gizmodata/hardcharger` there with this repository's `release.yml`
-(environment `npm`) as its trusted publisher, and the repository variable
-`NPM_PUBLISH_ENABLED` is `true`. `npm publish` from a laptop refuses to run.
+package tarball and the CHANGELOG section, then publishes to npm (public) with trusted
+publishing (OIDC, no stored token) when the repository variable `NPM_PUBLISH_ENABLED` is `true`.
+The npm job first checks that `@gizmodata/warp-sql` is on npm in the range `package.json` names;
+on npmjs.com, `@gizmodata/hardcharger`'s trusted publisher is this repository's `release.yml`
+(environment `npm`). `npm publish` from a laptop refuses to run.
 
 ## 📄 License
 
