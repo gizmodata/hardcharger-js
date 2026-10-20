@@ -7,7 +7,7 @@
 # keeps naming the npm package and its semver range: the tarball is a development and CI
 # stand-in, never part of what ships. Run this before `npm ci`.
 #
-#   HARDCHARGER_JS_WARP_SQL_REPO   where to clone from (default: git@github.com:gizmodata/warp-sql-js.git;
+#   HARDCHARGER_JS_WARP_SQL_REPO   where to clone from (default: https://github.com/gizmodata/warp-sql-js.git;
 #                                  a local checkout works too)
 set -euo pipefail
 
@@ -17,7 +17,7 @@ if ! [[ "$commit" =~ ^[0-9a-f]{40}$ ]]; then
   echo "scripts/warp-sql-js.commit must hold one full commit SHA, not '$commit'" >&2
   exit 1
 fi
-repo="${HARDCHARGER_JS_WARP_SQL_REPO:-git@github.com:gizmodata/warp-sql-js.git}"
+repo="${HARDCHARGER_JS_WARP_SQL_REPO:-https://github.com/gizmodata/warp-sql-js.git}"
 
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT

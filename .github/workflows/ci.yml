@@ -62,6 +62,10 @@ jobs:
           printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/warp_sql_js && chmod 600 ~/.ssh/warp_sql_js
           printf 'Host github.com\n  IdentityFile ~/.ssh/warp_sql_js\n  IdentitiesOnly yes\n' >> ~/.ssh/config
       - name: Build and pack the pinned commit
+        env:
+          # The script's default is the public https URL; while the repository is private, CI
+          # clones over SSH with the deploy key above. Both go at the public flip.
+          HARDCHARGER_JS_WARP_SQL_REPO: git@github.com:gizmodata/warp-sql-js.git
         run: scripts/install-warp-sql.sh
       - uses: actions/upload-artifact@v7
         with:
