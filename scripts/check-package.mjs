@@ -15,7 +15,13 @@ const maxDistBytes = 32 * 1024;
 const problems = [];
 const dir = mkdtempSync(join(tmpdir(), "hardcharger-js-pack-"));
 try {
-  const [packed] = JSON.parse(execFileSync("npm", ["pack", "--json", "--pack-destination", dir], { encoding: "utf8" }));
+  const result = JSON.parse(execFileSync("npm", ["pack", "--json", "--pack-destination", dir], { encoding: "utf8" }));
+  // npm 11 returns an array; npm 12 keys the same records by package name.
+  const packages = Array.isArray(result) ? result : Object.values(result);
+  if (packages.length !== 1 || typeof packages[0]?.filename !== "string") {
+    throw new Error("npm pack did not return exactly one package with a filename");
+  }
+  const [packed] = packages;
   execFileSync("tar", ["-xzf", join(dir, packed.filename), "-C", dir]);
   const pkgDir = join(dir, "package");
   const files = [];

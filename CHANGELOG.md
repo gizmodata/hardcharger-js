@@ -6,6 +6,13 @@ All notable changes to `@gizmodata/hardcharger` are documented here. The format 
 
 ## [Unreleased]
 
+## [2.0.1] - 2026-10-21
+
+### Fixed
+
+- The package-integrity check accepts npm 12's package-name-keyed JSON as well as npm 11's
+  array, so trusted publishing can finish with the current npm. The client API is unchanged.
+
 ## [2.0.0] - 2026-10-20
 
 The first release, with Hardcharger 2.0.0: the client for the Warp SQL protocol 1.0.0, on
