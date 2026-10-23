@@ -6,6 +6,14 @@ All notable changes to `@gizmodata/hardcharger` are documented here. The format 
 
 ## [Unreleased]
 
+## [2.0.2] - 2026-10-22
+
+### Fixed
+
+- Link every README badge to its package, documentation or project, including absolute links
+  that also work on npm. The npm version and Node.js requirement badges now read the published
+  package metadata. The client API is unchanged.
+
 ## [2.0.1] - 2026-10-21
 
 ### Fixed

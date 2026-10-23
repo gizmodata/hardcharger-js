@@ -8,14 +8,14 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/npm-%40gizmodata%2Fhardcharger-cb3837.svg?logo=npm" alt="npm: @gizmodata/hardcharger">
-  <img src="https://img.shields.io/badge/TypeScript-ESM%20%2B%20CJS-3178C6.svg?logo=typescript&logoColor=white" alt="TypeScript, ESM and CJS">
-  <img src="https://img.shields.io/badge/Node-%E2%89%A522.19-339933.svg?logo=node.js&logoColor=white" alt="Node 22.19 or later">
-  <img src="https://img.shields.io/badge/also-browsers%20%7C%20Deno%20%7C%20Bun%20%7C%20Workers-lightgrey.svg" alt="Browsers, Deno, Bun, Workers">
+  <a href="https://www.npmjs.com/package/@gizmodata/hardcharger"><img src="https://img.shields.io/npm/v/%40gizmodata%2Fhardcharger?logo=npm" alt="npm: @gizmodata/hardcharger version"></a>
+  <a href="https://www.typescriptlang.org/docs/"><img src="https://img.shields.io/badge/TypeScript-ESM%20%2B%20CJS-3178C6.svg?logo=typescript&logoColor=white" alt="TypeScript, ESM and CJS"></a>
+  <a href="https://nodejs.org/en/download"><img src="https://img.shields.io/node/v/%40gizmodata%2Fhardcharger?logo=node.js&logoColor=white" alt="Supported Node.js versions"></a>
+  <a href="https://docs.hardcharger.gizmodata.com/clients/javascript/#in-the-browser"><img src="https://img.shields.io/badge/also-browsers%20%7C%20Deno%20%7C%20Bun%20%7C%20Workers-lightgrey.svg" alt="Browsers, Deno, Bun, Workers"></a>
   <a href="https://github.com/gizmodata/warp-sql"><img src="https://img.shields.io/badge/protocol-Warp%20SQL%201.0.0-31a8db.svg" alt="Warp SQL protocol"></a>
   <a href="https://github.com/gizmodata/warp-sql-js"><img src="https://img.shields.io/badge/built%20on-Warp%20SQL%20JS-31a8db.svg" alt="Built on the Warp SQL JavaScript client"></a>
   <a href="https://github.com/gizmodata/hardcharger"><img src="https://img.shields.io/badge/server-Hardcharger-f15a24.svg" alt="Hardcharger"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache%202.0-brightgreen.svg" alt="Apache 2.0 license"></a>
+  <a href="https://github.com/gizmodata/hardcharger-js/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-Apache%202.0-brightgreen.svg" alt="Apache 2.0 license"></a>
   <a href="https://gizmodata.com"><img src="https://img.shields.io/badge/by-GizmoData%E2%84%A2-f15a24.svg" alt="GizmoData™"></a>
 </p>
 
@@ -46,7 +46,7 @@ Deno, Bun and Cloudflare Workers, no native code. Its whole API comes through th
 so you never import `@gizmodata/warp-sql` yourself. For a Warp SQL server other than
 Hardcharger, use `@gizmodata/warp-sql` directly.
 
-> **Status: 2.0.0, with Hardcharger 2.0.0.** Built on `@gizmodata/warp-sql` 1.0.0 (warp-sql-js
+> **Status: 2.0.2, with Hardcharger 2.0.0.** Built on `@gizmodata/warp-sql` 1.0.0 (warp-sql-js
 > `903feb4`, Warp SQL protocol 1.0.0); tested against `hardcharger-server` from Hardcharger's main
 > branch.
 
