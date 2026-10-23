@@ -1,7 +1,7 @@
 {
   "name": "@gizmodata/hardcharger",
-  "version": "2.0.1",
-  "description": "JavaScript/TypeScript client for Hardcharger™, GizmoData™'s DuckDB 2.0 server: hardcharger:// URLs on the Warp SQL client, for Node, browsers, Deno, Bun and edge runtimes.",
+  "version": "2.0.2",
+  "description": "JavaScript/TypeScript client for Hardcharger\u2122, GizmoData\u2122's DuckDB 2.0 server: hardcharger:// URLs on the Warp SQL client, for Node, browsers, Deno, Bun and edge runtimes.",
   "author": "GizmoData LLC",
   "license": "Apache-2.0",
   "type": "module",

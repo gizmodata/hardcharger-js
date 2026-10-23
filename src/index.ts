@@ -38,7 +38,7 @@ import { clientInvalidArgument, parseUrl, schemes } from "./uri.js";
 export { defaultPort, parseUrl, scheme, schemes } from "./uri.js";
 
 /** This package's version. */
-export const version = "2.0.1";
+export const version = "2.0.2";
 
 /**
  * `connect`'s options: the Warp SQL client's, with `url` also taking `hardcharger://` URLs and
