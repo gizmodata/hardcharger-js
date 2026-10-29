@@ -6,4 +6,4 @@ dist/
 coverage/
 test-results/
 playwright-report/
-.warp-sql/
+.chargewire/

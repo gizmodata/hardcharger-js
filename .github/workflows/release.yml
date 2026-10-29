@@ -6,7 +6,7 @@ name: release
 #
 # npm publishing (public) uses npm trusted publishing (OIDC: no npm token is stored anywhere)
 # and runs only when the repository variable NPM_PUBLISH_ENABLED is "true". It needs
-# @gizmodata/warp-sql on npm in the range package.json names (the job checks), and on npmjs.com
+# @gizmodata/chargewire on npm in the range package.json names (the job checks), and on npmjs.com
 # @gizmodata/hardcharger with, under Settings > Trusted publishing, GitHub Actions for
 # organization gizmodata, repository hardcharger-js, workflow release.yml, environment npm; the
 # `npm` environment exists in this repository (with required reviewers, if wanted).
@@ -30,7 +30,7 @@ jobs:
     permissions:
       contents: read
       packages: read # the server image the live suites run against
-    secrets: inherit # DEPLOY_KEY_WARP_SQL_JS
+    secrets: inherit # DEPLOY_KEY_CHARGEWIRE_JS
 
   github-release:
     needs: tests
@@ -51,8 +51,8 @@ jobs:
           grep -q "^## \[$version\]" CHANGELOG.md || { echo "::error::CHANGELOG.md has no section for $version"; exit 1; }
       - uses: actions/download-artifact@v8
         with:
-          name: warp-sql-tarball
-          path: .warp-sql
+          name: chargewire-tarball
+          path: .chargewire
       - run: npm ci
       - run: npm run build
       - run: npm run check:package
@@ -87,16 +87,16 @@ jobs:
           registry-url: https://registry.npmjs.org
       - name: npm new enough for trusted publishing
         run: npm install -g npm@latest && npm --version
-      - name: "@gizmodata/warp-sql is on npm in the range package.json names"
+      - name: "@gizmodata/chargewire is on npm in the range package.json names"
         run: |
-          range=$(node -p 'require("./package.json").dependencies["@gizmodata/warp-sql"]')
-          found=$(npm view "@gizmodata/warp-sql@$range" version 2>/dev/null | tail -1)
-          [ -n "$found" ] || { echo "::error::@gizmodata/warp-sql@$range is not on npm: publish it first, or this package can't be installed"; exit 1; }
-          echo "@gizmodata/warp-sql@$range: $found"
+          range=$(node -p 'require("./package.json").dependencies["@gizmodata/chargewire"]')
+          found=$(npm view "@gizmodata/chargewire@$range" version 2>/dev/null | tail -1)
+          [ -n "$found" ] || { echo "::error::@gizmodata/chargewire@$range is not on npm: publish it first, or this package can't be installed"; exit 1; }
+          echo "@gizmodata/chargewire@$range: $found"
       - uses: actions/download-artifact@v8
         with:
-          name: warp-sql-tarball
-          path: .warp-sql
+          name: chargewire-tarball
+          path: .chargewire
       - run: npm ci
       - run: npm run build
       - run: npm run check:package

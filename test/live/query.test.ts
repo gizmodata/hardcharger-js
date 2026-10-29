@@ -10,7 +10,7 @@ import {
   ErrorCode,
   HardchargerError,
   type ServerInfo,
-  WarpSqlError,
+  ChargewireError,
   connect,
 } from "../../src/index.js";
 import { type RunningServer, adminUsername, launchServer, open, reached, rejection, scalar } from "./helpers.js";
@@ -37,7 +37,7 @@ describe("password sign-in", () => {
     expect(info.server_name).toBe("Hardcharger");
   });
 
-  test("server-info has the Warp SQL 1.0 keys and Hardcharger's prefixed ones", async () => {
+  test("server-info has the Chargewire 1.0 keys and Hardcharger's prefixed ones", async () => {
     const info: ServerInfo = await conn.metadata.serverInfo();
     expect(typeof info.server_version).toBe("string");
     expect(typeof info.server_arrow_version).toBe("string");
@@ -154,7 +154,7 @@ describe("errors", () => {
   test("bad SQL is sql_error (400) with the SQLSTATE, and the session goes on", async () => {
     const err = await rejection(conn.query("SELEC 1"));
     expect(err).toBeInstanceOf(HardchargerError);
-    expect(err).toBeInstanceOf(WarpSqlError);
+    expect(err).toBeInstanceOf(ChargewireError);
     expect(HardchargerError.is(err, ErrorCode.sqlError)).toBe(true);
     expect(err.code).toBe("sql_error");
     expect(err.status).toBe(400);

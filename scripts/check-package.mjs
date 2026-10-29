@@ -1,10 +1,10 @@
 // Checks the package as npm would publish it (`npm pack` of the built dist/):
 //
-//   - it is this thin layer only: no file of the Warp SQL client (@gizmodata/warp-sql) and none
+//   - it is this thin layer only: no file of the Chargewire client (@gizmodata/chargewire) and none
 //     of its code, which stays a dependency, imported by name;
 //   - it is small: its dist/ is a few KB (it fails above maxDistBytes);
 //   - only dist/, README.md, CHANGELOG.md, LICENSE and package.json are in it;
-//   - its package.json names @gizmodata/warp-sql as an npm semver range, never a tarball, a
+//   - its package.json names @gizmodata/chargewire as an npm semver range, never a tarball, a
 //     path or a git URL, and carries no scripts that would run on install.
 import { execFileSync } from "node:child_process";
 import { mkdtempSync, readFileSync, readdirSync, rmSync, statSync } from "node:fs";
@@ -40,12 +40,12 @@ try {
   if (distBytes > maxDistBytes)
     problems.push(`dist/ is ${distBytes} bytes, over ${maxDistBytes}: is something bundled?`);
 
-  // The Warp SQL client's code: strings from its source that this layer never contains.
+  // The Chargewire client's code: strings from its source that this layer never contains.
   const markers = [
     "Idempotency-Key",
     "/v1/sessions",
     "/v1/auth/token",
-    "class WarpSqlError",
+    "class ChargewireError",
     "class ResultStream",
     "class Connection",
     "grant_type",
@@ -57,16 +57,16 @@ try {
   for (const file of files.filter((f) => f.startsWith("dist/"))) {
     const text = readFileSync(join(pkgDir, file), "utf8");
     for (const marker of markers)
-      if (text.includes(marker)) problems.push(`${file} contains "${marker}": warp-sql-js code`);
-    if (!file.endsWith("ts") && !/(from|require\()\s*"@gizmodata\/warp-sql"/.test(text)) {
-      problems.push(`${file} does not import @gizmodata/warp-sql by name`);
+      if (text.includes(marker)) problems.push(`${file} contains "${marker}": chargewire-js code`);
+    if (!file.endsWith("ts") && !/(from|require\()\s*"@gizmodata\/chargewire"/.test(text)) {
+      problems.push(`${file} does not import @gizmodata/chargewire by name`);
     }
   }
 
   const pkg = JSON.parse(readFileSync(join(pkgDir, "package.json"), "utf8"));
-  const spec = pkg.dependencies?.["@gizmodata/warp-sql"];
+  const spec = pkg.dependencies?.["@gizmodata/chargewire"];
   if (!/^[\^~]?\d+\.\d+\.\d+$/.test(spec ?? "")) {
-    problems.push(`package.json: @gizmodata/warp-sql must be an npm semver range, not ${spec}`);
+    problems.push(`package.json: @gizmodata/chargewire must be an npm semver range, not ${spec}`);
   }
   for (const [name, value] of Object.entries({ ...pkg.dependencies, ...pkg.peerDependencies })) {
     if (/^(file:|link:|git|https?:|github:)|\.tgz$|\//.test(value)) problems.push(`package.json: ${name} is ${value}`);
@@ -75,7 +75,7 @@ try {
     if (pkg.scripts?.[hook]) problems.push(`package.json: a ${hook} script would run on install`);
   }
 
-  // Both builds load, by the package's own name, and share the Warp SQL client's classes.
+  // Both builds load, by the package's own name, and share the Chargewire client's classes.
   const probe = (type, code) => {
     try {
       execFileSync(process.execPath, ["--input-type", type, "-e", code], { stdio: "pipe" });
@@ -85,13 +85,13 @@ try {
   };
   probe(
     "commonjs",
-    `const h = require("@gizmodata/hardcharger"), w = require("@gizmodata/warp-sql");
-     if (h.HardchargerError !== w.WarpSqlError || typeof h.connect !== "function") process.exit(1);`,
+    `const h = require("@gizmodata/hardcharger"), w = require("@gizmodata/chargewire");
+     if (h.HardchargerError !== w.ChargewireError || typeof h.connect !== "function") process.exit(1);`,
   );
   probe(
     "module",
-    `import * as h from "@gizmodata/hardcharger"; import * as w from "@gizmodata/warp-sql";
-     if (h.HardchargerError !== w.WarpSqlError || h.parseUrl("hardcharger://h").href !== "https://h:31337/warp") process.exit(1);`,
+    `import * as h from "@gizmodata/hardcharger"; import * as w from "@gizmodata/chargewire";
+     if (h.HardchargerError !== w.ChargewireError || h.parseUrl("hardcharger://h").href !== "https://h:31337/chargewire") process.exit(1);`,
   );
 
   if (problems.length > 0) {
@@ -101,7 +101,7 @@ try {
   console.log(
     `${packed.filename}: ${packed.size} bytes packed, ${packed.unpackedSize} unpacked (dist/ ${distBytes}), ` +
       `${files.length} files; ` +
-      `@gizmodata/warp-sql ${spec} is a dependency, none of its code is inside`,
+      `@gizmodata/chargewire ${spec} is a dependency, none of its code is inside`,
   );
 } finally {
   rmSync(dir, { recursive: true, force: true });

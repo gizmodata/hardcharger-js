@@ -1,17 +1,23 @@
 // Licensed under the Apache License, Version 2.0.
 
-import { ErrorCode, type SchemeMap, WarpSqlError, defaultSchemes, parseUrl as parseWarpUrl } from "@gizmodata/warp-sql";
+import {
+  ErrorCode,
+  type SchemeMap,
+  ChargewireError,
+  defaultSchemes,
+  parseUrl as parseChargewireUrl,
+} from "@gizmodata/chargewire";
 
-/** Hardcharger's URI scheme: `hardcharger://host[:port]` means exactly `warp://host:port`. */
+/** Hardcharger's URI scheme: `hardcharger://host[:port]` means exactly `chargewire://host:port`. */
 export const scheme = "hardcharger";
 
-/** Hardcharger's Warp SQL port, used when a `hardcharger://` URI names none (`warp://` defaults to 443). */
+/** Hardcharger's Chargewire port, used when a `hardcharger://` URI names none (`chargewire://` defaults to 443). */
 export const defaultPort = 31337;
 
 /**
  * The schemes `connect` accepts: `hardcharger://` (TLS unless `?tls=false`, port 31337 unless
- * the URL names one) and the Warp SQL client's own `warp://`, `https://` and `http://`, as they
- * are. The Warp SQL client does the parsing.
+ * the URL names one) and the Chargewire client's own `chargewire://`, `https://` and `http://`, as they
+ * are. The Chargewire client does the parsing.
  */
 export const schemes: SchemeMap = Object.freeze({
   [scheme]: { tls: true, tlsParameter: true, defaultPort },
@@ -19,14 +25,14 @@ export const schemes: SchemeMap = Object.freeze({
 });
 
 /**
- * Parses a connection URL into the Warp SQL base URL it stands for, e.g.
- * `hardcharger://db.example.com` to `https://db.example.com:31337/warp`.
+ * Parses a connection URL into the Chargewire base URL it stands for, e.g.
+ * `hardcharger://db.example.com` to `https://db.example.com:31337/chargewire`.
  *
  *     hardcharger://host                     HTTPS to host:31337
  *     hardcharger://host:port                HTTPS to another port
  *     hardcharger://host?tls=false           plain HTTP (development, loopback)
- *     hardcharger://host:port/custom/prefix  the server mounts Warp SQL under /custom/prefix
- *     warp://…, https://…, http://…          the Warp SQL client's own spellings, as they are
+ *     hardcharger://host:port/custom/prefix  the server mounts Chargewire under /custom/prefix
+ *     chargewire://…, https://…, http://…          the Chargewire client's own spellings, as they are
  *
  * Refuses, with a `client_invalid_argument` error: `hardcharger+http://` and other `hardcharger+…`
  * schemes (plain HTTP is `?tls=false`), JDBC URLs, `useEncryption`, credentials in the URL,
@@ -35,13 +41,13 @@ export const schemes: SchemeMap = Object.freeze({
 export function parseUrl(url: string): URL {
   refuseForeignSpellings(url);
   try {
-    return parseWarpUrl(url, schemes);
+    return parseChargewireUrl(url, schemes);
   } catch (err) {
     throw rebrand(err);
   }
 }
 
-/** Refusals the Warp SQL client would phrase without naming the Hardcharger spelling. */
+/** Refusals the Chargewire client would phrase without naming the Hardcharger spelling. */
 function refuseForeignSpellings(url: unknown): void {
   if (typeof url !== "string") return;
   const match = /^([A-Za-z][A-Za-z0-9+.-]*):/.exec(url);
@@ -67,18 +73,18 @@ function refuseForeignSpellings(url: unknown): void {
   }
 }
 
-/** The Warp SQL client's own refusal, with Hardcharger's prefix and example on its message. */
+/** The Chargewire client's own refusal, with Hardcharger's prefix and example on its message. */
 function rebrand(err: unknown): unknown {
-  if (!(err instanceof WarpSqlError) || err.code !== ErrorCode.clientInvalidArgument) return err;
-  const message = err.message.replace("e.g. warp://host:port", "e.g. hardcharger://host:31337");
+  if (!(err instanceof ChargewireError) || err.code !== ErrorCode.clientInvalidArgument) return err;
+  const message = err.message.replace("e.g. chargewire://host:port", "e.g. hardcharger://host:31337");
   return err.with({ message: `[hardcharger] ${message}` });
 }
 
-/** The URL without its user info, as the Warp SQL client shows it in messages. */
+/** The URL without its user info, as the Chargewire client shows it in messages. */
 function redact(url: string): string {
   return url.replace(/\/\/[^/@?#]*@/, "//***@");
 }
 
-export function clientInvalidArgument(message: string): WarpSqlError {
-  return new WarpSqlError({ code: ErrorCode.clientInvalidArgument, message: `[hardcharger] ${message}` });
+export function clientInvalidArgument(message: string): ChargewireError {
+  return new ChargewireError({ code: ErrorCode.clientInvalidArgument, message: `[hardcharger] ${message}` });
 }

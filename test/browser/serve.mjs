@@ -1,5 +1,5 @@
 // Serves a blank page with the built package bundled for the browser. Fails if the bundle
-// holds the Warp SQL client's Node build (undici) instead of its browser build.
+// holds the Chargewire client's Node build (undici) instead of its browser build.
 import { createServer } from "node:http";
 
 import { build } from "esbuild";
@@ -16,11 +16,11 @@ const bundle = await build({
 });
 const inputs = Object.keys(bundle.metafile.inputs);
 if (inputs.some((path) => path.includes("node_modules/undici/"))) {
-  console.error("the browser bundle holds undici: @gizmodata/warp-sql's Node build was picked");
+  console.error("the browser bundle holds undici: @gizmodata/chargewire's Node build was picked");
   process.exit(1);
 }
-if (!inputs.some((path) => path.includes("node_modules/@gizmodata/warp-sql/dist/web/"))) {
-  console.error("the browser bundle does not hold @gizmodata/warp-sql's browser build (dist/web)");
+if (!inputs.some((path) => path.includes("node_modules/@gizmodata/chargewire/dist/web/"))) {
+  console.error("the browser bundle does not hold @gizmodata/chargewire's browser build (dist/web)");
   process.exit(1);
 }
 const script = bundle.outputFiles[0].contents;

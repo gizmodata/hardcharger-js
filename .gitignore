@@ -3,7 +3,7 @@ node_modules/
 coverage/
 test-results/
 playwright-report/
-.warp-sql/
+.chargewire/
 *.tgz
 .DS_Store
 .idea/

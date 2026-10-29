@@ -12,8 +12,8 @@
   <a href="https://www.typescriptlang.org/docs/"><img src="https://img.shields.io/badge/TypeScript-ESM%20%2B%20CJS-3178C6.svg?logo=typescript&logoColor=white" alt="TypeScript, ESM and CJS"></a>
   <a href="https://nodejs.org/en/download"><img src="https://img.shields.io/node/v/%40gizmodata%2Fhardcharger?logo=node.js&logoColor=white" alt="Supported Node.js versions"></a>
   <a href="https://docs.hardcharger.gizmodata.com/clients/javascript/#in-the-browser"><img src="https://img.shields.io/badge/also-browsers%20%7C%20Deno%20%7C%20Bun%20%7C%20Workers-lightgrey.svg" alt="Browsers, Deno, Bun, Workers"></a>
-  <a href="https://github.com/gizmodata/warp-sql"><img src="https://img.shields.io/badge/protocol-Warp%20SQL%201.0.0-31a8db.svg" alt="Warp SQL protocol"></a>
-  <a href="https://github.com/gizmodata/warp-sql-js"><img src="https://img.shields.io/badge/built%20on-Warp%20SQL%20JS-31a8db.svg" alt="Built on the Warp SQL JavaScript client"></a>
+  <a href="https://github.com/gizmodata/chargewire"><img src="https://img.shields.io/badge/protocol-Chargewire%201.0.0-31a8db.svg" alt="Chargewire protocol"></a>
+  <a href="https://github.com/gizmodata/chargewire-js"><img src="https://img.shields.io/badge/built%20on-Chargewire%20JS-31a8db.svg" alt="Built on the Chargewire JavaScript client"></a>
   <a href="https://github.com/gizmodata/hardcharger"><img src="https://img.shields.io/badge/server-Hardcharger-f15a24.svg" alt="Hardcharger"></a>
   <a href="https://github.com/gizmodata/hardcharger-js/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-Apache%202.0-brightgreen.svg" alt="Apache 2.0 license"></a>
   <a href="https://gizmodata.com"><img src="https://img.shields.io/badge/by-GizmoData%E2%84%A2-f15a24.svg" alt="GizmoData™"></a>
@@ -26,34 +26,34 @@
 ## 🔌 What is it?
 
 The JavaScript/TypeScript client for [Hardcharger™](https://github.com/gizmodata/hardcharger),
-GizmoData™'s DuckDB 2.0 server. Hardcharger speaks [Warp SQL](https://github.com/gizmodata/warp-sql),
-so this package is a thin layer on the [Warp SQL JavaScript client](https://github.com/gizmodata/warp-sql-js)
-(`@gizmodata/warp-sql`), which it depends on and re-exports, the way
-[adbc-driver-hardcharger](https://github.com/gizmodata/hardcharger-adbc) sits on the Warp SQL ADBC
-driver and [hardcharger-jdbc](https://github.com/gizmodata/hardcharger-jdbc) on the Warp SQL JDBC
+GizmoData™'s DuckDB 2.0 server. Hardcharger speaks [Chargewire](https://github.com/gizmodata/chargewire),
+so this package is a thin layer on the [Chargewire JavaScript client](https://github.com/gizmodata/chargewire-js)
+(`@gizmodata/chargewire`), which it depends on and re-exports, the way
+[adbc-driver-hardcharger](https://github.com/gizmodata/hardcharger-adbc) sits on the Chargewire ADBC
+driver and [hardcharger-jdbc](https://github.com/gizmodata/hardcharger-jdbc) on the Chargewire JDBC
 driver. It adds:
 
 - 🏎️ **`hardcharger://` URLs**, with Hardcharger's port 31337 as the default, meaning exactly
   what they mean in the ADBC driver;
 - 🪪 **`authType: "mtls"`**, the ADBC and JDBC drivers' name for client certificate sign-in;
-- 🏷️ **Hardcharger names** for the Warp SQL client's classes (`HardchargerError`,
+- 🏷️ **Hardcharger names** for the Chargewire client's classes (`HardchargerError`,
   `HardchargerConnection`, `HardchargerErrorCode`): the same objects, so `instanceof` works
   with either name.
 
 Everything else, from Arrow results and bind parameters to split results, ingest,
-transactions, cancel, TLS and client certificates, is the Warp SQL client's: Node, browsers,
+transactions, cancel, TLS and client certificates, is the Chargewire client's: Node, browsers,
 Deno, Bun and Cloudflare Workers, no native code. Its whole API comes through this package,
-so you never import `@gizmodata/warp-sql` yourself. For a Warp SQL server other than
-Hardcharger, use `@gizmodata/warp-sql` directly.
+so you never import `@gizmodata/chargewire` yourself. For a Chargewire server other than
+Hardcharger, use `@gizmodata/chargewire` directly.
 
-> **Status: 2.0.2, with Hardcharger 2.0.0.** Built on `@gizmodata/warp-sql` 1.0.0 (warp-sql-js
-> `903feb4`, Warp SQL protocol 1.0.0); tested against `hardcharger-server` from Hardcharger's main
+> **Status: 2.0.2, with Hardcharger 2.0.0.** Built on `@gizmodata/chargewire` 1.0.0 (chargewire-js
+> `1227155`, Chargewire protocol 1.0.0); tested against `hardcharger-server` from Hardcharger's main
 > branch.
 
 | Package                               | What it is                                                              |
 | ------------------------------------- | ----------------------------------------------------------------------- |
 | `@gizmodata/hardcharger`              | this client: `hardcharger://` URLs, Hardcharger names, everything below |
-| `@gizmodata/warp-sql`                 | the generic Warp SQL client it is built on, for any Warp SQL server     |
+| `@gizmodata/chargewire`               | the generic Chargewire client it is built on, for any Chargewire server |
 | `pip install adbc-driver-hardcharger` | the ADBC driver: Python, C/C++, Go, R, Rust                             |
 | `hardcharger-jdbc`                    | the JDBC driver: Java, DBeaver and other JDBC tools                     |
 
@@ -123,20 +123,20 @@ Results are [Apache Arrow](https://arrow.apache.org/docs/js/) Tables and RecordB
 npm install @gizmodata/hardcharger apache-arrow
 ```
 
-`@gizmodata/warp-sql` comes with it; `apache-arrow` (21.2 or later) is a peer dependency, so your
+`@gizmodata/chargewire` comes with it; `apache-arrow` (21.2 or later) is a peer dependency, so your
 application and the client share one copy of Arrow's classes.
 
 ## 🔗 URLs
 
-| URL                                     | Meaning                                           |
-| --------------------------------------- | ------------------------------------------------- |
-| `hardcharger://host`                    | HTTPS to `host:31337`                             |
-| `hardcharger://host:port`               | HTTPS to another port                             |
-| `hardcharger://host?tls=false`          | Plain HTTP (development, loopback)                |
-| `hardcharger://host:port/custom/prefix` | The server mounts Warp SQL under `/custom/prefix` |
-| `warp://…`, `https://…`, `http://…`     | The Warp SQL client's own spellings, as they are  |
+| URL                                       | Meaning                                             |
+| ----------------------------------------- | --------------------------------------------------- |
+| `hardcharger://host`                      | HTTPS to `host:31337`                               |
+| `hardcharger://host:port`                 | HTTPS to another port                               |
+| `hardcharger://host?tls=false`            | Plain HTTP (development, loopback)                  |
+| `hardcharger://host:port/custom/prefix`   | The server mounts Chargewire under `/custom/prefix` |
+| `chargewire://…`, `https://…`, `http://…` | The Chargewire client's own spellings, as they are  |
 
-`hardcharger://` means exactly what Warp SQL's `warp://` means, so TLS is on unless the URL says
+`hardcharger://` means exactly what Chargewire's `chargewire://` means, so TLS is on unless the URL says
 `?tls=false` (or `tls=0`; `true` and `1` keep it on). These are the URLs the ADBC driver
 accepts. Refused before anything is sent, each with a `client_invalid_argument` error that says why:
 
@@ -147,26 +147,26 @@ accepts. Refused before anything is sent, each with a `client_invalid_argument` 
 - credentials in the URL (pass `username` and `password`), any other URL parameter, a URL
   without a host or with a scheme the client doesn't know.
 
-`parseUrl(url)` shows the Warp SQL base URL a URL stands for (`hardcharger://db.example.com` →
-`https://db.example.com:31337/warp`) and throws the errors above; `schemes` is the scheme map
-`connect` hands the Warp SQL client, which does the parsing.
+`parseUrl(url)` shows the Chargewire base URL a URL stands for (`hardcharger://db.example.com` →
+`https://db.example.com:31337/chargewire`) and throws the errors above; `schemes` is the scheme map
+`connect` hands the Chargewire client, which does the parsing.
 
 ## ⚙️ Options
 
-`connect` takes the Warp SQL client's options, with their defaults: one credential
+`connect` takes the Chargewire client's options, with their defaults: one credential
 (`username` and `password`, `token`, `tokenProvider`, `subjectToken` for SSO token exchange, or
 `authType: "client_certificate"`), `tls` (`ca`, `cert`, `key`, `servername`, `skipVerify`;
 Node, Deno and Bun), `catalog`, `schema`, `sessionOptions`, retries, and the statement
 defaults (`resultPartitions`, 8 in Node and 4 in browsers; `resultOrder`, `async`,
 `retainResult`, `statementTimeoutMs`, `queryTag`, `ipcCompression`). The
-[Warp SQL client's README](https://github.com/gizmodata/warp-sql-js#-connecting) describes
+[Chargewire client's README](https://github.com/gizmodata/chargewire-js#-connecting) describes
 each one. What differs:
 
 | Option     | Here                                                                                                                                 |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------ |
 | `url`      | also `hardcharger://` URLs (above)                                                                                                   |
 | `authType` | also `"mtls"`, the same as `"client_certificate"`, and `"external"`, the same as `"oauth_browser"` (as in the ADBC and JDBC drivers) |
-| `schemes`  | not taken: the URL schemes are this package's (use `@gizmodata/warp-sql` for schemes of your own)                                    |
+| `schemes`  | not taken: the URL schemes are this package's (use `@gizmodata/chargewire` for schemes of your own)                                  |
 | `logger`   | warnings (a session the server lost and the client replaced, say) are printed with `[hardcharger]`                                   |
 
 ## 🪪 Client certificate sign-in (mutual TLS)
@@ -213,7 +213,7 @@ with `not_implemented`. The server's refusals keep their codes, each with HTTP 4
 `unknown_certificate_identity`, `certificate_required`, `certificate_revoked`,
 `certificate_mismatch` and `certificate_identity_mismatch`. In a browser the certificate is the
 one the user picks from the browser's store, so there are no `tls` options; the
-[Warp SQL client's README](https://github.com/gizmodata/warp-sql-js#-client-certificate-sign-in)
+[Chargewire client's README](https://github.com/gizmodata/chargewire-js#-client-certificate-sign-in)
 has the details.
 
 ## 🌐 Browser sign-in (SSO)
@@ -236,8 +236,8 @@ const conn = await connect({
 
 The steps (`startBrowserSignIn`, `pollBrowserSignIn`, `browserSignIn`) and the helpers for web
 pages that come back to themselves (`beginBrowserRedirectSignIn`, `completeBrowserRedirectSignIn`)
-are the Warp SQL client's, taking `hardcharger://` URLs here; see its
-[README](https://github.com/gizmodata/warp-sql-js#-browser-sign-in-sso). The server's sign-in
+are the Chargewire client's, taking `hardcharger://` URLs here; see its
+[README](https://github.com/gizmodata/chargewire-js#-browser-sign-in-sso). The server's sign-in
 lives on its main port; there is no separate sign-in port.
 
 A failed sign-in throws the flow's code (`access_denied` when the person or the provider refused,
@@ -249,10 +249,10 @@ completed within `browserSignInTimeoutMs` (`timeoutMs` for `browserSignIn`) is
 ## 🖥️ Browsers, Deno, Bun and Workers
 
 One build serves every runtime: this layer has no platform-specific code, and it imports
-`@gizmodata/warp-sql` by name, so your bundler or runtime picks that package's own build through
+`@gizmodata/chargewire` by name, so your bundler or runtime picks that package's own build through
 its export conditions (`node` for Node, Deno and Bun; `default` for browsers and edge runtimes).
 The browser tests bundle this package with esbuild for the browser, check that the bundle holds
-the Warp SQL client's browser build, and run it in Chromium and WebKit against a server that
+the Chargewire client's browser build, and run it in Chromium and WebKit against a server that
 allows the page's origin (`hardcharger-server --cors-origins https://app.example.com`), with the
 same calls as in Node.
 
@@ -261,15 +261,15 @@ same calls as in Node.
 | Export                                                                                                                                        | What it is                                                                                                                           |
 | --------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
 | `connect(options)`                                                                                                                            | a `Connection` (`HardchargerConnection`): `query`, `stream`, `execute`, `prepare`, `ingest`, `metadata`, `transaction`, `close`, ... |
-| `HardchargerError` (= `WarpSqlError`)                                                                                                         | every error the client raises: `code`, `status`, `sqlstate`, `detail`, `requestId`, ...                                              |
+| `HardchargerError` (= `ChargewireError`)                                                                                                      | every error the client raises: `code`, `status`, `sqlstate`, `detail`, `requestId`, ...                                              |
 | `HardchargerErrorCode` (= `ErrorCode`)                                                                                                        | the codes, e.g. `HardchargerErrorCode.sqlError` is `"sql_error"`                                                                     |
 | `parseUrl(url)`, `schemes`, `scheme`, `defaultPort`                                                                                           | the URL translation above; `"hardcharger"`, `31337`                                                                                  |
 | `version`                                                                                                                                     | this package's version                                                                                                               |
-| `Connection`, `PreparedStatement`, `ResultStream`, `Metadata`, `Capability`, `WarpSqlError`, `ErrorCode`                                      | the Warp SQL client's, under their own names                                                                                         |
-| types: `ConnectOptions`, `CallOptions`, `StatementOptions`, `IngestOptions`, `Parameters`, `TlsOptions`, `ColumnInfo`, `ProblemDocument`, ... | the Warp SQL client's types                                                                                                          |
+| `Connection`, `PreparedStatement`, `ResultStream`, `Metadata`, `Capability`, `ChargewireError`, `ErrorCode`                                   | the Chargewire client's, under their own names                                                                                       |
+| types: `ConnectOptions`, `CallOptions`, `StatementOptions`, `IngestOptions`, `Parameters`, `TlsOptions`, `ColumnInfo`, `ProblemDocument`, ... | the Chargewire client's types                                                                                                        |
 
-The [Warp SQL client's API table](https://github.com/gizmodata/warp-sql-js#-api) describes
-every method, and [How it behaves](https://github.com/gizmodata/warp-sql-js#-how-it-behaves)
+The [Chargewire client's API table](https://github.com/gizmodata/chargewire-js#-api) describes
+every method, and [How it behaves](https://github.com/gizmodata/chargewire-js#-how-it-behaves)
 the retries, split results, cancel and lost sessions.
 
 ## ⚠️ Errors
@@ -289,20 +289,20 @@ assert each code this client meets: `sql_error` (400, with the SQLSTATE), `inval
 `not_implemented`, `execution_error` (422), `client_transport_error`, `client_invalid_argument` and
 `client_connection_closed`.
 
-The class is the Warp SQL client's, under a Hardcharger name (its `name` stays
-`"WarpSqlError"`): one class, so errors from anywhere in the client are `instanceof` both.
+The class is the Chargewire client's, under a Hardcharger name (its `name` stays
+`"ChargewireError"`): one class, so errors from anywhere in the client are `instanceof` both.
 
 ## 🛠️ Building and testing
 
-Node 22.19 or later. For development and CI, `@gizmodata/warp-sql` is built from
-[gizmodata/warp-sql-js](https://github.com/gizmodata/warp-sql-js) at the commit pinned in
-[scripts/warp-sql-js.commit](scripts/warp-sql-js.commit) and packed to `.warp-sql/`, where
+Node 22.19 or later. For development and CI, `@gizmodata/chargewire` is built from
+[gizmodata/chargewire-js](https://github.com/gizmodata/chargewire-js) at the commit pinned in
+[scripts/chargewire-js.commit](scripts/chargewire-js.commit) and packed to `.chargewire/`, where
 `package-lock.json` finds it, so the tests run against that exact client. `package.json`, and so
 the published package, names the npm package and its range (`^1.0.0`); the tarball is a stand-in
 for development and CI only.
 
 ```bash
-npm run warp-sql        # clone warp-sql-js (git access needed), build and pack the pinned commit
+npm run chargewire        # clone chargewire-js (git access needed), build and pack the pinned commit
 npm ci
 npm run lint            # eslint (typed rules), prettier, and the lock's shape (scripts/check-lock.mjs)
 npm run typecheck       # src, tests and configs
@@ -311,7 +311,7 @@ npm run build           # dist/: ESM, CJS and types
 npm run check:package   # the packed package: this layer only, a few KB, publint, are-the-types-wrong
 ```
 
-`HARDCHARGER_JS_WARP_SQL_REPO=/path/to/warp-sql-js npm run warp-sql` builds from a local
+`HARDCHARGER_JS_CHARGEWIRE_REPO=/path/to/chargewire-js npm run chargewire` builds from a local
 checkout. TypeScript stays on 6.0: typescript-eslint and the declaration build need the
 TypeScript compiler API, which TypeScript 7 doesn't ship.
 
@@ -333,7 +333,7 @@ Negative tests assert the error code, each beside a positive twin. CI runs every
 the image of Hardcharger's main branch (`ghcr.io/gizmodata/hardcharger:main`), pulled with the
 workflow's `GITHUB_TOKEN`; while the image is private the package must grant this repository
 read access (package settings, "Manage Actions access"), or the live jobs fail. CI clones
-warp-sql-js with `DEPLOY_KEY_WARP_SQL_JS`, a read-only deploy key of that repository (needed
+chargewire-js with `DEPLOY_KEY_CHARGEWIRE_JS`, a read-only deploy key of that repository (needed
 while it is private).
 
 ## 📦 Releasing
@@ -343,7 +343,7 @@ update both and `package.json`'s version, commit, and push `main` and `vX.Y.Z` t
 `release.yml` runs the full CI on the tagged commit, then makes a GitHub Release with the
 package tarball and the CHANGELOG section, then publishes to npm (public) with trusted
 publishing (OIDC, no stored token) when the repository variable `NPM_PUBLISH_ENABLED` is `true`.
-The npm job first checks that `@gizmodata/warp-sql` is on npm in the range `package.json` names;
+The npm job first checks that `@gizmodata/chargewire` is on npm in the range `package.json` names;
 on npmjs.com, `@gizmodata/hardcharger`'s trusted publisher is this repository's `release.yml`
 (environment `npm`). `npm publish` from a laptop refuses to run.
 

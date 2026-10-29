@@ -6,7 +6,7 @@ import { defineConfig } from "eslint/config";
 import tseslint from "typescript-eslint";
 
 export default defineConfig(
-  { ignores: ["dist/", "node_modules/", "test-results/", "playwright-report/", "coverage/", ".warp-sql/"] },
+  { ignores: ["dist/", "node_modules/", "test-results/", "playwright-report/", "coverage/", ".chargewire/"] },
   js.configs.recommended,
   ...tseslint.configs.strictTypeChecked,
   {

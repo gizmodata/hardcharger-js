@@ -1,7 +1,7 @@
 {
   "name": "@gizmodata/hardcharger",
   "version": "2.0.2",
-  "description": "JavaScript/TypeScript client for Hardcharger\u2122, GizmoData\u2122's DuckDB 2.0 server: hardcharger:// URLs on the Warp SQL client, for Node, browsers, Deno, Bun and edge runtimes.",
+  "description": "JavaScript/TypeScript client for Hardcharger\u2122, GizmoData\u2122's DuckDB 2.0 server: hardcharger:// URLs on the Chargewire client, for Node, browsers, Deno, Bun and edge runtimes.",
   "author": "GizmoData LLC",
   "license": "Apache-2.0",
   "type": "module",
@@ -12,7 +12,7 @@
   "homepage": "https://github.com/gizmodata/hardcharger-js#readme",
   "keywords": [
     "hardcharger",
-    "warp-sql",
+    "chargewire",
     "gizmodata",
     "duckdb",
     "arrow",
@@ -50,7 +50,7 @@
     "node": ">=22.19.0"
   },
   "scripts": {
-    "warp-sql": "scripts/install-warp-sql.sh",
+    "chargewire": "scripts/install-chargewire.sh",
     "build": "tsdown",
     "typecheck": "tsc -p tsconfig.json && tsc -p test/tsconfig.json",
     "lint": "eslint . && prettier --check . && node scripts/check-lock.mjs",
@@ -66,7 +66,7 @@
     "apache-arrow": "^21.2.0"
   },
   "dependencies": {
-    "@gizmodata/warp-sql": "^1.0.0"
+    "@gizmodata/chargewire": "^1.0.0"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.5",

@@ -1,11 +1,11 @@
 // Runs the README's examples, as written, against hardcharger-server on the default port
 // 31337 with the README's credentials (HARDCHARGER_JS_TEST_SERVER_BINARY; `npm run build` and
-// `npm run warp-sql` first):
+// `npm run chargewire` first):
 //
 //   - every examples/*.mjs file, and its expected output examples/*.out, must appear in
 //     README.md verbatim, so the README shows exactly what runs here;
 //   - they run as a user's code would: in a new project where the README's `npm install`
-//     line installed this package's packed tarball (and @gizmodata/warp-sql's, from .warp-sql/);
+//     line installed this package's packed tarball (and @gizmodata/chargewire's, from .chargewire/);
 //   - examples/quickstart.mjs against `hardcharger-server` (plain HTTP);
 //   - examples/mtls.mjs against the README's certificate sign-in command line, with throwaway
 //     certificates in its working directory.
@@ -79,21 +79,21 @@ async function startServer(home, args) {
 /**
  * A new project, with the packages the README's own `npm install` line names, installed from
  * this checkout's packed tarballs instead of the registry: @gizmodata/hardcharger as `npm pack`
- * makes it, and @gizmodata/warp-sql from .warp-sql/ (installed in the same command, so the
+ * makes it, and @gizmodata/chargewire from .chargewire/ (installed in the same command, so the
  * hardcharger package's dependency on it resolves to that tarball, not to npm).
  */
 function consumerProject(dir) {
   const install = /^npm install @gizmodata\/hardcharger apache-arrow$/m.exec(readme);
   if (!install) fail("README.md has no `npm install @gizmodata/hardcharger apache-arrow` line");
-  const warpTarball = readdirSync(join(root, ".warp-sql")).find((name) => name.endsWith(".tgz"));
-  if (!warpTarball) fail(".warp-sql/ has no tarball: run `npm run warp-sql`");
-  copyFileSync(join(root, ".warp-sql", warpTarball), join(dir, warpTarball));
+  const chargewireTarball = readdirSync(join(root, ".chargewire")).find((name) => name.endsWith(".tgz"));
+  if (!chargewireTarball) fail(".chargewire/ has no tarball: run `npm run chargewire`");
+  copyFileSync(join(root, ".chargewire", chargewireTarball), join(dir, chargewireTarball));
   const [packed] = JSON.parse(
     execFileSync("npm", ["pack", "--json", "--pack-destination", dir], { cwd: root, encoding: "utf8" }),
   );
   writeFileSync(join(dir, "package.json"), JSON.stringify({ name: "readme-examples", private: true, type: "module" }));
-  console.log(`$ ${install[0]}  (from ./${packed.filename} and ./${warpTarball})`);
-  execFileSync("npm", ["install", "apache-arrow", `./${warpTarball}`, `./${packed.filename}`], {
+  console.log(`$ ${install[0]}  (from ./${packed.filename} and ./${chargewireTarball})`);
+  execFileSync("npm", ["install", "apache-arrow", `./${chargewireTarball}`, `./${packed.filename}`], {
     cwd: dir,
     stdio: "inherit",
   });

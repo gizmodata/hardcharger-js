@@ -3,10 +3,10 @@
 /**
  * @packageDocumentation
  * The JavaScript/TypeScript client for Hardcharger, GizmoData's DuckDB 2.0 server: a thin
- * layer on the Warp SQL client (`@gizmodata/warp-sql`) that accepts `hardcharger://` URLs,
+ * layer on the Chargewire client (`@gizmodata/chargewire`) that accepts `hardcharger://` URLs,
  * with Hardcharger's port 31337 as the default. Everything else (Arrow results, bind
  * parameters, split results, ingest, transactions, cancel, TLS and client certificates) is
- * the Warp SQL client's, re-exported here so you never import it yourself.
+ * the Chargewire client's, re-exported here so you never import it yourself.
  *
  * ```ts
  * import { connect } from "@gizmodata/hardcharger";
@@ -21,17 +21,17 @@ import {
   type BrowserSignInPoll,
   type BrowserSignInResult,
   type BrowserSignInStorage,
-  type BrowserSignInTarget as WarpBrowserSignInTarget,
+  type BrowserSignInTarget as ChargewireBrowserSignInTarget,
   type Connection,
-  type ConnectOptions as WarpConnectOptions,
+  type ConnectOptions as ChargewireConnectOptions,
   type Logger,
-  beginBrowserRedirectSignIn as warpBeginBrowserRedirectSignIn,
-  browserSignIn as warpBrowserSignIn,
-  completeBrowserRedirectSignIn as warpCompleteBrowserRedirectSignIn,
-  connect as warpConnect,
-  pollBrowserSignIn as warpPollBrowserSignIn,
-  startBrowserSignIn as warpStartBrowserSignIn,
-} from "@gizmodata/warp-sql";
+  beginBrowserRedirectSignIn as chargewireBeginBrowserRedirectSignIn,
+  browserSignIn as chargewireBrowserSignIn,
+  completeBrowserRedirectSignIn as chargewireCompleteBrowserRedirectSignIn,
+  connect as chargewireConnect,
+  pollBrowserSignIn as chargewirePollBrowserSignIn,
+  startBrowserSignIn as chargewireStartBrowserSignIn,
+} from "@gizmodata/chargewire";
 
 import { clientInvalidArgument, parseUrl, schemes } from "./uri.js";
 
@@ -41,15 +41,15 @@ export { defaultPort, parseUrl, scheme, schemes } from "./uri.js";
 export const version = "2.0.2";
 
 /**
- * `connect`'s options: the Warp SQL client's, with `url` also taking `hardcharger://` URLs and
+ * `connect`'s options: the Chargewire client's, with `url` also taking `hardcharger://` URLs and
  * `authType` also taking `"mtls"`, the name the Hardcharger ADBC and JDBC drivers accept for
  * `"client_certificate"`, and `"external"`, theirs for `"oauth_browser"`. `schemes` is not
  * taken: the URL schemes are this package's to set.
  */
-export interface ConnectOptions extends Omit<WarpConnectOptions, "schemes" | "authType"> {
+export interface ConnectOptions extends Omit<ChargewireConnectOptions, "schemes" | "authType"> {
   /**
    * `hardcharger://host[:port][/prefix][?tls=false]` (HTTPS to port 31337 unless it says
-   * otherwise), or the Warp SQL client's `warp://`, `https://` and `http://`.
+   * otherwise), or the Chargewire client's `chargewire://`, `https://` and `http://`.
    */
   url: string;
   /**
@@ -71,7 +71,7 @@ export interface ConnectOptions extends Omit<WarpConnectOptions, "schemes" | "au
  * const conn = await connect({ url: "hardcharger://db.example.com", username: "joe", password });
  * ```
  *
- * Errors are {@link HardchargerError}s (the Warp SQL client's `WarpSqlError`), with the
+ * Errors are {@link HardchargerError}s (the Chargewire client's `ChargewireError`), with the
  * server's code in `code`.
  */
 export async function connect(options: ConnectOptions): Promise<Connection> {
@@ -82,22 +82,22 @@ export async function connect(options: ConnectOptions): Promise<Connection> {
   }
   if (given.schemes !== undefined) {
     throw clientInvalidArgument(
-      "schemes is set by @gizmodata/hardcharger (hardcharger://, warp://, https://, http://); " +
-        "for other schemes use @gizmodata/warp-sql's connect",
+      "schemes is set by @gizmodata/hardcharger (hardcharger://, chargewire://, https://, http://); " +
+        "for other schemes use @gizmodata/chargewire's connect",
     );
   }
   parseUrl(options.url); // a bad URL is refused here, in Hardcharger's words, before anything is sent
   const { authType, logger, ...rest } = options;
-  const warpOptions: WarpConnectOptions = { ...rest, schemes, logger: logger ?? defaultLogger };
+  const chargewireOptions: ChargewireConnectOptions = { ...rest, schemes, logger: logger ?? defaultLogger };
   if (authType !== undefined) {
-    warpOptions.authType =
+    chargewireOptions.authType =
       authType === "mtls" ? "client_certificate" : authType === "external" ? "oauth_browser" : authType;
   }
-  return warpConnect(warpOptions);
+  return chargewireConnect(chargewireOptions);
 }
 
-/** Which server a browser sign-in is for: the Warp SQL client's, with `hardcharger://` URLs. */
-export type BrowserSignInTarget = Omit<WarpBrowserSignInTarget, "schemes">;
+/** Which server a browser sign-in is for: the Chargewire client's, with `hardcharger://` URLs. */
+export type BrowserSignInTarget = Omit<ChargewireBrowserSignInTarget, "schemes">;
 
 function target<T extends BrowserSignInTarget>(options: T): T & { schemes: typeof schemes } {
   if (options === null || typeof options !== "object")
@@ -106,46 +106,46 @@ function target<T extends BrowserSignInTarget>(options: T): T & { schemes: typeo
   return { ...options, schemes };
 }
 
-/** Starts a browser sign-in flow (the Warp SQL client's `startBrowserSignIn`, for `hardcharger://` URLs). */
+/** Starts a browser sign-in flow (the Chargewire client's `startBrowserSignIn`, for `hardcharger://` URLs). */
 export async function startBrowserSignIn(
   options: BrowserSignInTarget & { returnTo?: string },
 ): Promise<BrowserSignInFlow> {
-  return warpStartBrowserSignIn(target(options));
+  return chargewireStartBrowserSignIn(target(options));
 }
 
 /** Polls a browser sign-in flow once; a failed sign-in throws its code. */
 export async function pollBrowserSignIn(
   options: BrowserSignInTarget & { flow: Pick<BrowserSignInFlow, "flowId" | "pollSecret"> },
 ): Promise<BrowserSignInPoll> {
-  return warpPollBrowserSignIn(target(options));
+  return chargewirePollBrowserSignIn(target(options));
 }
 
 /** The whole browser sign-in: `openUrl` opens the sign-in URL; resolves with the server's access token. */
 export async function browserSignIn(
   options: BrowserSignInTarget & { openUrl: (url: string) => void | Promise<void>; timeoutMs?: number },
 ): Promise<BrowserSignInResult> {
-  return warpBrowserSignIn(target(options));
+  return chargewireBrowserSignIn(target(options));
 }
 
 /** For a web page: starts a flow that comes back to `returnTo` and goes to the identity provider. */
 export async function beginBrowserRedirectSignIn(
   options: BrowserSignInTarget & { returnTo?: string; storage?: BrowserSignInStorage; assign?: (url: string) => void },
 ): Promise<void> {
-  return warpBeginBrowserRedirectSignIn(target(options));
+  return chargewireBeginBrowserRedirectSignIn(target(options));
 }
 
 /** For the page the sign-in returned to: collects the token, or undefined when there is none for this tab. */
 export async function completeBrowserRedirectSignIn(
   options: BrowserSignInTarget & { href?: string; storage?: BrowserSignInStorage; replaceUrl?: (url: string) => void },
 ): Promise<BrowserSignInResult | undefined> {
-  return warpCompleteBrowserRedirectSignIn(target(options));
+  return chargewireCompleteBrowserRedirectSignIn(target(options));
 }
 
 const defaultLogger: Logger = {
   warn: (message, fields) => console.warn(`[hardcharger] ${message}`, fields ?? ""),
 };
 
-// Everything else is the Warp SQL client's, re-exported under its own names and, where a
+// Everything else is the Chargewire client's, re-exported under its own names and, where a
 // Hardcharger name reads better, under that too. The aliases are the same classes and
 // objects, so `instanceof` and `HardchargerError.is` work on every error the client raises.
 export {
@@ -156,13 +156,13 @@ export {
   Metadata,
   PreparedStatement,
   ResultStream,
-  WarpSqlError,
-  WarpSqlError as HardchargerError,
+  ChargewireError,
+  ChargewireError as HardchargerError,
   ErrorCode as HardchargerErrorCode,
   browserSignInFragmentKey,
   browserSignInProvider,
   takeBrowserSignInFlowId,
-} from "@gizmodata/warp-sql";
+} from "@gizmodata/chargewire";
 export type {
   ArrowInput,
   BrowserSignInFlow,
@@ -189,5 +189,5 @@ export type {
   StatementState,
   TlsOptions,
   TransactionState,
-  WarpSqlErrorInit,
-} from "@gizmodata/warp-sql";
+  ChargewireErrorInit,
+} from "@gizmodata/chargewire";

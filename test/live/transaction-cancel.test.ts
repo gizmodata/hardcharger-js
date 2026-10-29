@@ -92,7 +92,7 @@ describe("cancel", () => {
     expect(await scalar(conn, "SELECT 42")).toBe(42);
   });
 
-  // Warp SQL 1.0: a statement stopped before its submit is answered is an error response, 409,
+  // Chargewire 1.0: a statement stopped before its submit is answered is an error response, 409,
   // naming the statement and why it stopped, on both submit paths.
   test.each([false, true])("statementTimeoutMs (async %s): 409 with statementId and cancelReason", async (async) => {
     const err = await rejection(conn.query(forever, undefined, { statementTimeoutMs: 500, async }));

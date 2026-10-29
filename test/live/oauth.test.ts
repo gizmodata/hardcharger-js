@@ -1,6 +1,6 @@
 // Licensed under the Apache License, Version 2.0.
 //
-// Browser sign-in (authType "external", Warp SQL §4.3) against hardcharger-server with
+// Browser sign-in (authType "external", Chargewire §4.3) against hardcharger-server with
 // --oauth-client-id and a mock OpenID Connect provider (idp.ts): the server verifies the
 // provider's ID token with its JWKS and hands out its own access token.
 
@@ -54,14 +54,14 @@ async function browse(authorizeUrl: string): Promise<Response> {
   const atIdp = await fetch(authorizeUrl, { redirect: "manual" });
   expect(atIdp.status).toBe(302);
   const callback = atIdp.headers.get("location")!;
-  expect(callback.startsWith(`http://127.0.0.1:${server.port}/warp/v1/auth/oauth/callback?`)).toBe(true);
+  expect(callback.startsWith(`http://127.0.0.1:${server.port}/chargewire/v1/auth/oauth/callback?`)).toBe(true);
   return fetch(callback, { redirect: "manual" });
 }
 
 describe("browser sign-in (live, Hardcharger)", () => {
   test('authType "external": signed in as the provider\'s user', async () => {
     reached();
-    const discovery = (await (await fetch(`http://127.0.0.1:${server.port}/warp`)).json()) as never;
+    const discovery = (await (await fetch(`http://127.0.0.1:${server.port}/chargewire`)).json()) as never;
     expect(browserSignInProvider(discovery)).toBeUndefined(); // no --oauth-provider-name given
     const conn = await connect({
       url: server.url,

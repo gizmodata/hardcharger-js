@@ -3,15 +3,15 @@ name: ci
 # Every check, on every push and pull request; also the release gate (release.yml calls it on
 # the tagged commit):
 #   - lint (eslint, prettier, the lock's shape), a real typecheck, unit tests, the build, and the
-#     packed package (this layer only, a few KB: no warp-sql-js code in it);
+#     packed package (this layer only, a few KB: no chargewire-js code in it);
 #   - unit tests on Node 22, 24 and 26, and on the dependency floors;
 #   - the live suite (Node 22 and 24), the built package in Chromium and WebKit, and the README's
 #     examples, all against hardcharger-server from Hardcharger's main branch.
 #
 # Access, with no personal token:
-#   - gizmodata/warp-sql-js through the DEPLOY_KEY_WARP_SQL_JS secret, a read-only deploy key
+#   - gizmodata/chargewire-js through the DEPLOY_KEY_CHARGEWIRE_JS secret, a read-only deploy key
 #     of that repository (needed while that repository is private; a plain clone once it is
-#     public): the warp-sql job builds the commit in scripts/warp-sql-js.commit and hands the
+#     public): the chargewire job builds the commit in scripts/chargewire-js.commit and hands the
 #     tarball to the other jobs, so a run tests the pinned client, never a published version;
 #   - hardcharger-server from the image ghcr.io/gizmodata/hardcharger, pulled with this
 #     workflow's GITHUB_TOKEN. While the image is private the package must grant this
@@ -41,43 +41,43 @@ env:
   HARDCHARGER_IMAGE: ghcr.io/gizmodata/hardcharger:main
 
 jobs:
-  warp-sql:
-    name: "@gizmodata/warp-sql (pinned warp-sql-js commit)"
+  chargewire:
+    name: "@gizmodata/chargewire (pinned chargewire-js commit)"
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
           node-version: 24
-      - name: Deploy key for gizmodata/warp-sql-js
+      - name: Deploy key for gizmodata/chargewire-js
         env:
-          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY_WARP_SQL_JS }}
+          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY_CHARGEWIRE_JS }}
         run: |
           if [ -z "$DEPLOY_KEY" ]; then
-            echo "::error::the DEPLOY_KEY_WARP_SQL_JS secret is not set: the private key of a read-only deploy key of gizmodata/warp-sql-js"
+            echo "::error::the DEPLOY_KEY_CHARGEWIRE_JS secret is not set: the private key of a read-only deploy key of gizmodata/chargewire-js"
             exit 1
           fi
           mkdir -p ~/.ssh && chmod 700 ~/.ssh
           ssh-keyscan -t ed25519 github.com >> ~/.ssh/known_hosts 2>/dev/null
-          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/warp_sql_js && chmod 600 ~/.ssh/warp_sql_js
-          printf 'Host github.com\n  IdentityFile ~/.ssh/warp_sql_js\n  IdentitiesOnly yes\n' >> ~/.ssh/config
+          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/chargewire_js && chmod 600 ~/.ssh/chargewire_js
+          printf 'Host github.com\n  IdentityFile ~/.ssh/chargewire_js\n  IdentitiesOnly yes\n' >> ~/.ssh/config
       - name: Build and pack the pinned commit
         env:
           # The script's default is the public https URL; while the repository is private, CI
           # clones over SSH with the deploy key above. Both go at the public flip.
-          HARDCHARGER_JS_WARP_SQL_REPO: git@github.com:gizmodata/warp-sql-js.git
-        run: scripts/install-warp-sql.sh
+          HARDCHARGER_JS_CHARGEWIRE_REPO: git@github.com:gizmodata/chargewire-js.git
+        run: scripts/install-chargewire.sh
       - uses: actions/upload-artifact@v7
         with:
-          name: warp-sql-tarball
-          path: .warp-sql/*.tgz
-          include-hidden-files: true # .warp-sql/ is a dot-directory, which upload-artifact leaves out by default
+          name: chargewire-tarball
+          path: .chargewire/*.tgz
+          include-hidden-files: true # .chargewire/ is a dot-directory, which upload-artifact leaves out by default
           if-no-files-found: error
           retention-days: 7
 
   checks:
     name: lint, typecheck, unit tests, package
-    needs: warp-sql
+    needs: chargewire
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
@@ -86,8 +86,8 @@ jobs:
           node-version: 24
       - uses: actions/download-artifact@v8
         with:
-          name: warp-sql-tarball
-          path: .warp-sql
+          name: chargewire-tarball
+          path: .chargewire
       - run: npm ci
       - name: Lint (eslint, prettier, the lock's shape)
         run: npm run lint
@@ -102,7 +102,7 @@ jobs:
 
   node:
     name: unit tests (Node ${{ matrix.node }})
-    needs: warp-sql
+    needs: chargewire
     strategy:
       fail-fast: false
       matrix:
@@ -115,14 +115,14 @@ jobs:
           node-version: ${{ matrix.node }}
       - uses: actions/download-artifact@v8
         with:
-          name: warp-sql-tarball
-          path: .warp-sql
+          name: chargewire-tarball
+          path: .chargewire
       - run: npm ci
       - run: npm test
 
   lowest:
     name: unit tests on the dependency floors (Node 22.19)
-    needs: warp-sql
+    needs: chargewire
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
@@ -131,17 +131,17 @@ jobs:
           node-version: 22.19.0
       - uses: actions/download-artifact@v8
         with:
-          name: warp-sql-tarball
-          path: .warp-sql
+          name: chargewire-tarball
+          path: .chargewire
       - run: npm ci
-      # The floors of package.json's ranges: apache-arrow (peer) 21.2.0, and @gizmodata/warp-sql
+      # The floors of package.json's ranges: apache-arrow (peer) 21.2.0, and @gizmodata/chargewire
       # 1.0.0 (the tarball, built from the pinned commit).
       - name: Install exactly the floors
         run: |
           npm install --no-save apache-arrow@21.2.0
-          npm ls apache-arrow @gizmodata/warp-sql
+          npm ls apache-arrow @gizmodata/chargewire
           [ "$(jq -r .version node_modules/apache-arrow/package.json)" = 21.2.0 ]
-          [ "$(jq -r .version node_modules/@gizmodata/warp-sql/package.json)" = 1.0.0 ]
+          [ "$(jq -r .version node_modules/@gizmodata/chargewire/package.json)" = 1.0.0 ]
       - run: npm test
 
   server:
@@ -174,7 +174,7 @@ jobs:
 
   live:
     name: live tests (Node ${{ matrix.node }}, Hardcharger)
-    needs: [warp-sql, server]
+    needs: [chargewire, server]
     strategy:
       fail-fast: false
       matrix:
@@ -187,8 +187,8 @@ jobs:
           node-version: ${{ matrix.node }}
       - uses: actions/download-artifact@v8
         with:
-          name: warp-sql-tarball
-          path: .warp-sql
+          name: chargewire-tarball
+          path: .chargewire
       - uses: actions/download-artifact@v8
         with:
           name: hardcharger-linux-amd64
@@ -203,7 +203,7 @@ jobs:
 
   browser:
     name: browsers (Chromium, WebKit; Hardcharger)
-    needs: [warp-sql, server]
+    needs: [chargewire, server]
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
@@ -212,8 +212,8 @@ jobs:
           node-version: 24
       - uses: actions/download-artifact@v8
         with:
-          name: warp-sql-tarball
-          path: .warp-sql
+          name: chargewire-tarball
+          path: .chargewire
       - uses: actions/download-artifact@v8
         with:
           name: hardcharger-linux-amd64
@@ -229,7 +229,7 @@ jobs:
 
   examples:
     name: README examples (Hardcharger on 31337)
-    needs: [warp-sql, server]
+    needs: [chargewire, server]
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
@@ -238,8 +238,8 @@ jobs:
           node-version: 24
       - uses: actions/download-artifact@v8
         with:
-          name: warp-sql-tarball
-          path: .warp-sql
+          name: chargewire-tarball
+          path: .chargewire
       - uses: actions/download-artifact@v8
         with:
           name: hardcharger-linux-amd64

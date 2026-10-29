@@ -1,5 +1,5 @@
 // The built package in Chromium and WebKit: test/browser/serve.mjs bundles dist/index.mjs
-// with esbuild for the browser (which picks @gizmodata/warp-sql's browser build through its
+// with esbuild for the browser (which picks @gizmodata/chargewire's browser build through its
 // export conditions) and serves it on a page; global-setup.ts starts hardcharger-server
 // (HARDCHARGER_JS_TEST_SERVER_BINARY) allowing that page's origin. Without the binary the run
 // fails; it never skips. Needs `npm run build` first.

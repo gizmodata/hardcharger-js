@@ -1,12 +1,12 @@
 // Licensed under the Apache License, Version 2.0.
 //
-// What connect refuses before it sends anything, and the package's surface: the Warp SQL
+// What connect refuses before it sends anything, and the package's surface: the Chargewire
 // client's API, re-exported, with Hardcharger names that are the same objects. No server: a
 // fetch that fails the test proves nothing was sent.
 
 import { readFileSync } from "node:fs";
 
-import * as warp from "@gizmodata/warp-sql";
+import * as chargewire from "@gizmodata/chargewire";
 import { describe, expect, test } from "vitest";
 
 import * as hardcharger from "../../src/index.js";
@@ -55,11 +55,13 @@ describe("connect refuses before sending anything", () => {
     expect(err.message).toContain("credentials do not belong in the url");
   });
 
-  // authType "mtls" is "client_certificate": the Warp SQL client's own refusals for a
+  // authType "mtls" is "client_certificate": the Chargewire client's own refusals for a
   // certificate sign-in prove the alias reached it.
   test.each(["mtls", "client_certificate"])('authType "%s" over plain HTTP', async (authType) => {
     const err = await refused({ url: "hardcharger://127.0.0.1?tls=false", authType, fetch: noNetwork });
-    expect(err.message).toBe('authType "client_certificate" needs TLS, but http://127.0.0.1:31337/warp is plain HTTP');
+    expect(err.message).toBe(
+      'authType "client_certificate" needs TLS, but http://127.0.0.1:31337/chargewire is plain HTTP',
+    );
   });
 
   test.each(["mtls", "client_certificate"])('authType "%s" without a certificate', async (authType) => {
@@ -78,7 +80,7 @@ describe("connect refuses before sending anything", () => {
     expect(err.message).toContain("client_certificate");
   });
 
-  // authType "external" is "oauth_browser": the Warp SQL client's refusal proves the alias reached it.
+  // authType "external" is "oauth_browser": the Chargewire client's refusal proves the alias reached it.
   test.each(["external", "oauth_browser"])('authType "%s" without openUrl', async (authType) => {
     const err = await refused({ url: "hardcharger://127.0.0.1", authType, fetch: noNetwork });
     expect(err.message).toBe(
@@ -98,7 +100,7 @@ describe("connect refuses before sending anything", () => {
     expect(err.message).toContain('authType "oauth_browser" signs in through the browser');
   });
 
-  test("an unknown authType is the Warp SQL client's refusal", async () => {
+  test("an unknown authType is the Chargewire client's refusal", async () => {
     const err = await refused({ url: "hardcharger://127.0.0.1", authType: "kerberos", fetch: noNetwork });
     expect(err.message).toContain("kerberos");
   });
@@ -106,11 +108,11 @@ describe("connect refuses before sending anything", () => {
 
 describe("connect reaches the server it names", () => {
   test.each([
-    ["hardcharger://db.example.com", "https://db.example.com:31337/warp"],
-    ["hardcharger://db.example.com:443", "https://db.example.com/warp"],
-    ["hardcharger://db.example.com:443?tls=false", "http://db.example.com:443/warp"],
+    ["hardcharger://db.example.com", "https://db.example.com:31337/chargewire"],
+    ["hardcharger://db.example.com:443", "https://db.example.com/chargewire"],
+    ["hardcharger://db.example.com:443?tls=false", "http://db.example.com:443/chargewire"],
     ["hardcharger://db.example.com/custom?tls=false", "http://db.example.com:31337/custom"],
-    ["warp://db.example.com", "https://db.example.com/warp"],
+    ["chargewire://db.example.com", "https://db.example.com/chargewire"],
   ])("%s: the first request goes to %s", async (url, discovery) => {
     const seen: string[] = [];
     const recording: typeof fetch = (input) => {
@@ -155,7 +157,10 @@ describe("browser sign-in on hardcharger:// URLs", () => {
     });
     expect(flow.flowId).toBe("f_1");
     expect(seen).toEqual([
-      { url: "https://db.example.com:31337/warp/v1/auth/oauth/flows", body: JSON.stringify({ return_to: "/ui/" }) },
+      {
+        url: "https://db.example.com:31337/chargewire/v1/auth/oauth/flows",
+        body: JSON.stringify({ return_to: "/ui/" }),
+      },
     ]);
   });
 
@@ -236,24 +241,24 @@ describe("browser sign-in on hardcharger:// URLs", () => {
 });
 
 describe("the package's surface", () => {
-  test("Hardcharger names are the Warp SQL client's objects", () => {
-    expect(hardcharger.HardchargerError).toBe(warp.WarpSqlError);
-    expect(hardcharger.WarpSqlError).toBe(warp.WarpSqlError);
-    expect(hardcharger.HardchargerErrorCode).toBe(warp.ErrorCode);
-    expect(hardcharger.HardchargerConnection).toBe(warp.Connection);
+  test("Hardcharger names are the Chargewire client's objects", () => {
+    expect(hardcharger.HardchargerError).toBe(chargewire.ChargewireError);
+    expect(hardcharger.ChargewireError).toBe(chargewire.ChargewireError);
+    expect(hardcharger.HardchargerErrorCode).toBe(chargewire.ErrorCode);
+    expect(hardcharger.HardchargerConnection).toBe(chargewire.Connection);
     for (const name of ["Capability", "Connection", "ErrorCode", "Metadata", "PreparedStatement", "ResultStream"]) {
-      expect((hardcharger as Record<string, unknown>)[name], name).toBe((warp as Record<string, unknown>)[name]);
+      expect((hardcharger as Record<string, unknown>)[name], name).toBe((chargewire as Record<string, unknown>)[name]);
     }
-    expect(hardcharger.connect).not.toBe(warp.connect);
+    expect(hardcharger.connect).not.toBe(chargewire.connect);
   });
 
-  test("every value the Warp SQL client exports is here, but its connect, parseUrl, defaultSchemes and version", () => {
+  test("every value the Chargewire client exports is here, but its connect, parseUrl, defaultSchemes and version", () => {
     const own = new Set(["connect", "parseUrl", "defaultSchemes", "version"]); // replaced by Hardcharger's
-    const missing = Object.keys(warp).filter((name) => !own.has(name) && !(name in hardcharger));
+    const missing = Object.keys(chargewire).filter((name) => !own.has(name) && !(name in hardcharger));
     expect(missing).toEqual([]);
   });
 
-  test("the client's own codes begin with client_ (Warp SQL 1.0), and the server's keep theirs", () => {
+  test("the client's own codes begin with client_ (Chargewire 1.0), and the server's keep theirs", () => {
     const codes = hardcharger.HardchargerErrorCode;
     expect(codes.clientInvalidArgument).toBe("client_invalid_argument");
     expect(codes.clientTransportError).toBe("client_transport_error");
