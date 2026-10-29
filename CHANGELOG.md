@@ -6,6 +6,16 @@ All notable changes to `@gizmodata/hardcharger` are documented here. The format 
 
 ## [Unreleased]
 
+### Changed
+
+- Built on the Chargewire protocol and its JavaScript client, `@gizmodata/chargewire`
+  (chargewire-js `1227155`), which this package now depends on and re-exports. The error class
+  is exported as `ChargewireError` (still also as `HardchargerError`), and its `name` is
+  `"ChargewireError"`. `parseUrl` and `connect` use the base path `/chargewire`.
+- Still works with Hardcharger servers released before the rename (2.2.0 and earlier): the
+  client falls back to them on its own, and connection URLs and code written for earlier
+  versions of this package keep working unchanged.
+
 ## [2.0.2] - 2026-10-22
 
 ### Fixed
