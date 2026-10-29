@@ -1,6 +1,6 @@
 {
   "name": "@gizmodata/hardcharger",
-  "version": "2.0.2",
+  "version": "2.1.0",
   "description": "JavaScript/TypeScript client for Hardcharger\u2122, GizmoData\u2122's DuckDB 2.0 server: hardcharger:// URLs on the Chargewire client, for Node, browsers, Deno, Bun and edge runtimes.",
   "author": "GizmoData LLC",
   "license": "Apache-2.0",
@@ -66,7 +66,7 @@
     "apache-arrow": "^21.2.0"
   },
   "dependencies": {
-    "@gizmodata/chargewire": "^1.0.0"
+    "@gizmodata/chargewire": "^2.0.0"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.5",

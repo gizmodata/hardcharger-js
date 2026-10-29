@@ -46,8 +46,8 @@ Deno, Bun and Cloudflare Workers, no native code. Its whole API comes through th
 so you never import `@gizmodata/chargewire` yourself. For a Chargewire server other than
 Hardcharger, use `@gizmodata/chargewire` directly.
 
-> **Status: 2.0.2, with Hardcharger 2.0.0.** Built on `@gizmodata/chargewire` 1.0.0 (chargewire-js
-> `1227155`, Chargewire protocol 1.0.0); tested against `hardcharger-server` from Hardcharger's main
+> **Status: 2.1.0, with Hardcharger 2.3.0.** Built on `@gizmodata/chargewire` 2.0.0 (chargewire-js
+> `1ea10dd`, Chargewire protocol 1.0.0); tested against `hardcharger-server` from Hardcharger's main
 > branch.
 
 | Package                               | What it is                                                              |
@@ -298,7 +298,7 @@ Node 22.19 or later. For development and CI, `@gizmodata/chargewire` is built fr
 [gizmodata/chargewire-js](https://github.com/gizmodata/chargewire-js) at the commit pinned in
 [scripts/chargewire-js.commit](scripts/chargewire-js.commit) and packed to `.chargewire/`, where
 `package-lock.json` finds it, so the tests run against that exact client. `package.json`, and so
-the published package, names the npm package and its range (`^1.0.0`); the tarball is a stand-in
+the published package, names the npm package and its range (`^2.0.0`); the tarball is a stand-in
 for development and CI only.
 
 ```bash
