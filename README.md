@@ -302,7 +302,7 @@ the published package, names the npm package and its range (`^1.0.0`); the tarba
 for development and CI only.
 
 ```bash
-npm run chargewire      # clone chargewire-js (git access needed), build and pack the pinned commit
+npm run chargewire      # clone chargewire-js, build and pack the pinned commit
 npm ci
 npm run lint            # eslint (typed rules), prettier, and the lock's shape (scripts/check-lock.mjs)
 npm run typecheck       # src, tests and configs
@@ -337,8 +337,7 @@ Negative tests assert the error code, each beside a positive twin. CI runs every
 the image of Hardcharger's main branch (`ghcr.io/gizmodata/hardcharger:main`), pulled with the
 workflow's `GITHUB_TOKEN`; while the image is private the package must grant this repository
 read access (package settings, "Manage Actions access"), or the live jobs fail. CI clones
-chargewire-js with `DEPLOY_KEY_CHARGEWIRE_JS`, a read-only deploy key of that repository (needed
-while it is private).
+chargewire-js anonymously over https.
 
 ## 📦 Releasing
 

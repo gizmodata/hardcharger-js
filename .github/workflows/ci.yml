@@ -10,15 +10,14 @@ name: ci
 #     also against a release from before the protocol's rename (2.2.0).
 #
 # Access, with no personal token:
-#   - gizmodata/chargewire-js through the DEPLOY_KEY_CHARGEWIRE_JS secret, a read-only deploy key
-#     of that repository (needed while that repository is private; a plain clone once it is
-#     public): the chargewire job builds the commit in scripts/chargewire-js.commit and hands the
-#     tarball to the other jobs, so a run tests the pinned client, never a published version;
+#   - gizmodata/chargewire-js is public, cloned anonymously over https: the chargewire job builds
+#     the commit in scripts/chargewire-js.commit and hands the tarball to the other jobs, so a run
+#     tests the pinned client, never a published version;
 #   - hardcharger-server from the image ghcr.io/gizmodata/hardcharger, pulled with this
 #     workflow's GITHUB_TOKEN. While the image is private the package must grant this
 #     repository read access (package settings, Manage Actions access); once it is public the
 #     login is unnecessary but harmless.
-# Without either, the job that needs it fails, and every job after it: nothing is skipped.
+# Without the image, the jobs that need it fail, and every job after them: nothing is skipped.
 
 on:
   push:
@@ -53,23 +52,8 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: 24
-      - name: Deploy key for gizmodata/chargewire-js
-        env:
-          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY_CHARGEWIRE_JS }}
-        run: |
-          if [ -z "$DEPLOY_KEY" ]; then
-            echo "::error::the DEPLOY_KEY_CHARGEWIRE_JS secret is not set: the private key of a read-only deploy key of gizmodata/chargewire-js"
-            exit 1
-          fi
-          mkdir -p ~/.ssh && chmod 700 ~/.ssh
-          ssh-keyscan -t ed25519 github.com >> ~/.ssh/known_hosts 2>/dev/null
-          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/chargewire_js && chmod 600 ~/.ssh/chargewire_js
-          printf 'Host github.com\n  IdentityFile ~/.ssh/chargewire_js\n  IdentitiesOnly yes\n' >> ~/.ssh/config
+      # The script's default: https://github.com/gizmodata/chargewire-js.git, anonymously.
       - name: Build and pack the pinned commit
-        env:
-          # The script's default is the public https URL; while the repository is private, CI
-          # clones over SSH with the deploy key above. Both go at the public flip.
-          HARDCHARGER_JS_CHARGEWIRE_REPO: git@github.com:gizmodata/chargewire-js.git
         run: scripts/install-chargewire.sh
       - uses: actions/upload-artifact@v7
         with:
