@@ -302,7 +302,7 @@ the published package, names the npm package and its range (`^1.0.0`); the tarba
 for development and CI only.
 
 ```bash
-npm run chargewire        # clone chargewire-js (git access needed), build and pack the pinned commit
+npm run chargewire      # clone chargewire-js (git access needed), build and pack the pinned commit
 npm ci
 npm run lint            # eslint (typed rules), prettier, and the lock's shape (scripts/check-lock.mjs)
 npm run typecheck       # src, tests and configs
@@ -319,7 +319,11 @@ The live suites start `hardcharger-server` themselves, on free loopback ports (a
 31337, to prove a URL without a port reaches it), with a fresh administrator password that
 contains `:` and `@`, an empty home directory (DuckDB's secrets directory included), and only
 `PATH`, `HOME`, `TMPDIR` and the password in its environment. Without the binary they fail;
-they never skip, and a run in which no test reached a server fails too.
+they never skip, and a run in which no test reached a server fails too. The live suite also
+checks a Hardcharger released before the protocol was renamed to Chargewire (the
+`ghcr.io/gizmodata/hardcharger:2.2.0` image, already running, plain HTTP) when
+`HARDCHARGER_JS_TEST_OLD_SERVER` names it (`host:port`, with
+`HARDCHARGER_JS_TEST_OLD_SERVER_PASSWORD`); CI starts one, and there those tests fail without it.
 
 ```bash
 export HARDCHARGER_JS_TEST_SERVER_BINARY=/path/to/hardcharger-server

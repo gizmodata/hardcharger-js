@@ -191,3 +191,6 @@ export type {
   TransactionState,
   ChargewireErrorInit,
 } from "@gizmodata/chargewire";
+
+// Names from before the protocol's rename, for code written against them (deprecated).
+export * from "./legacy-names.js";

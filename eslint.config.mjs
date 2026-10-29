@@ -38,6 +38,8 @@ export default defineConfig(
       "@typescript-eslint/no-unnecessary-type-assertion": "off",
     },
   },
+  // The deprecated names from before the protocol's rename are what these tests are about.
+  { files: ["test/**/legacy-names*.test.ts"], rules: { "@typescript-eslint/no-deprecated": "off" } },
   // Plain JavaScript (examples, scripts) and the build configs: no type information. The
   // configs are type-checked by `npm run typecheck` (test/tsconfig.json).
   { files: ["**/*.mjs", "*.config.ts"], ...tseslint.configs.disableTypeChecked },
