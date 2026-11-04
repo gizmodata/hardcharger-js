@@ -6,6 +6,33 @@ All notable changes to `@gizmodata/hardcharger` are documented here. The format 
 
 ## [Unreleased]
 
+## [2.1.1] - 2026-11-04
+
+### Added
+
+- Live tests for both changes below, against `hardcharger-server`: the idle-transaction session with
+  autocommit off and with `BEGIN` (beside a busy transaction that commits), and an unread
+  LIST result with no rows set aside for another statement (beside one with a row). They fail
+  on `@gizmodata/chargewire` 2.0.0.
+
+### Changed
+
+- Built on `@gizmodata/chargewire` 2.1.0 (chargewire-js `8a4ed78`; the dependency range is now
+  `^2.1.0`). A session that Hardcharger 2.7.0 ended because its transaction sat idle past
+  `idle_in_transaction_session_timeout` (`session_ended`, reason `idle_in_transaction`) is
+  replaced by a new session without a new sign-in. The statement that found it ended fails with
+  that error and is never run again, whether the transaction began with autocommit off or with
+  `BEGIN` in SQL. The next statement runs on the new session. The README's Errors section
+  describes it.
+
+### Fixed
+
+- A result with no rows and a LIST column (a query whose filter matched nothing) no longer fails
+  with "Cannot read properties of undefined (reading 'byteLength')" when the client sets it aside
+  unread for another statement on the same session
+  ([gizmodata/hardcharger#23](https://github.com/gizmodata/hardcharger/issues/23)); the fix is
+  in `@gizmodata/chargewire` 2.1.0.
+
 ## [2.1.0] - 2026-10-29
 
 ### Changed

@@ -46,8 +46,8 @@ Deno, Bun and Cloudflare Workers, no native code. Its whole API comes through th
 so you never import `@gizmodata/chargewire` yourself. For a Chargewire server other than
 Hardcharger, use `@gizmodata/chargewire` directly.
 
-> **Status: 2.1.0, with Hardcharger 2.3.0.** Built on `@gizmodata/chargewire` 2.0.0 (chargewire-js
-> `1ea10dd`, Chargewire protocol 1.0.0); tested against `hardcharger-server` from Hardcharger's main
+> **Status: 2.1.1, with Hardcharger 2.7.0.** Built on `@gizmodata/chargewire` 2.1.0 (chargewire-js
+> `8a4ed78`, Chargewire protocol 1.0.0); tested against `hardcharger-server` from Hardcharger's main
 > branch.
 
 | Package                               | What it is                                                              |
@@ -286,8 +286,18 @@ before its submit is answered is `statement_cancelled` or `statement_timeout` (4
 `HardchargerError.is(err, "sql_error")` checks the class and the code at once. The live tests
 assert each code this client meets: `sql_error` (400, with the SQLSTATE), `invalid_credentials`
 (401), `statement_cancelled`, `statement_timeout`, `unknown_certificate_identity` (401),
-`not_implemented`, `execution_error` (422), `client_transport_error`, `client_invalid_argument` and
-`client_connection_closed`.
+`not_implemented`, `execution_error` (422), `client_transport_error`, `client_invalid_argument`,
+`client_connection_closed`, and `session_ended` with `reason` `idle_in_transaction`.
+
+A session the server ended because its transaction sat idle past the server's
+`idle_in_transaction_session_timeout` (Hardcharger 2.7.0 and later) is `session_ended` with
+`reason: "idle_in_transaction"`: the transaction was rolled back, and the statement that found it
+ended fails with that error and is never run again, whether the transaction began with
+`setAutocommit(false)`, `transaction()` or `BEGIN` in SQL. The connection carries on: the next
+statement runs on a new session, without a new sign-in. Other `session_ended` reasons (`killed`,
+`credentials_changed`, `principal_dropped`, `token_revoked`, and `token_expired` when the token
+can't be renewed) are not cured by a new session: they are the error, and a new connection is
+the way on.
 
 The class is the Chargewire client's, under a Hardcharger name (its `name` stays
 `"ChargewireError"`): one class, so errors from anywhere in the client are `instanceof` both.
@@ -298,7 +308,7 @@ Node 22.19 or later. For development and CI, `@gizmodata/chargewire` is built fr
 [gizmodata/chargewire-js](https://github.com/gizmodata/chargewire-js) at the commit pinned in
 [scripts/chargewire-js.commit](scripts/chargewire-js.commit) and packed to `.chargewire/`, where
 `package-lock.json` finds it, so the tests run against that exact client. `package.json`, and so
-the published package, names the npm package and its range (`^2.0.0`); the tarball is a stand-in
+the published package, names the npm package and its range (`^2.1.0`); the tarball is a stand-in
 for development and CI only.
 
 ```bash
