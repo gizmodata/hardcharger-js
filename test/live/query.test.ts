@@ -106,6 +106,21 @@ describe("queries", () => {
     expect(rows).toBe(1_000_000);
   });
 
+  // gizmodata/hardcharger#23: before @gizmodata/chargewire 2.1.0, a result with no rows and a
+  // LIST column failed ("reading 'byteLength'") when the client read it ahead into memory, as it
+  // does with an unread result when another statement needs the session. The twin with rows
+  // goes the same way, beside it.
+  test.each([
+    ["no rows", "SELECT ['a'] AS v FROM range(3) WHERE range > 10", 0],
+    ["no rows, LIST of STRUCTs", "SELECT [{'seq': 1, 'at': 'x'}] AS v FROM range(3) WHERE range > 10", 0],
+    ["one row", "SELECT ['a'] AS v FROM range(3) WHERE range = 1", 1],
+  ])("an unread LIST result set aside for another statement: %s", async (_, sql, rows) => {
+    const result = conn.stream(sql);
+    expect((await result.schema()).fields.map((f) => f.name)).toEqual(["v"]);
+    expect(await scalar(conn, "SELECT 42")).toBe(42); // sets the unread result aside
+    expect((await result.toTable()).numRows).toBe(rows);
+  });
+
   test("execute returns the rows changed", async () => {
     await conn.execute("CREATE OR REPLACE TABLE q_exec (a INTEGER)");
     expect(await conn.execute("INSERT INTO q_exec SELECT * FROM range(5)")).toBe(5);
