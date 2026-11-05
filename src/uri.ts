@@ -15,6 +15,22 @@ export const scheme = "hardcharger";
 export const defaultPort = 31337;
 
 /**
+ * The port a `hardcharger://` URI without one gets for a GizmoData Cloud host
+ * ({@link isGizmodataCloudHost}): its clusters answer at `<host>:443`.
+ */
+export const gizmodataCloudPort = 443;
+
+/**
+ * Whether `host` is a GizmoData Cloud host: `gizmodata.com` or a name under it, in any case, with
+ * a trailing dot allowed. Only whole labels match: `evilgizmodata.com` and
+ * `gizmodata.com.example.org` are not.
+ */
+export function isGizmodataCloudHost(host: string): boolean {
+  const name = host.toLowerCase().replace(/\.$/u, "");
+  return name === "gizmodata.com" || name.endsWith(".gizmodata.com");
+}
+
+/**
  * The schemes `connect` accepts: `hardcharger://` (TLS unless `?tls=false`, port 31337 unless
  * the URL names one) and the Chargewire client's own `chargewire://`, `https://` and `http://`, as they
  * are. The Chargewire client does the parsing.
@@ -28,7 +44,7 @@ export const schemes: SchemeMap = Object.freeze({
  * Parses a connection URL into the Chargewire base URL it stands for, e.g.
  * `hardcharger://db.example.com` to `https://db.example.com:31337/chargewire`.
  *
- *     hardcharger://host                     HTTPS to host:31337
+ *     hardcharger://host                     HTTPS to host:31337 (host:443 for a GizmoData Cloud host)
  *     hardcharger://host:port                HTTPS to another port
  *     hardcharger://host?tls=false           plain HTTP (development, loopback)
  *     hardcharger://host:port/custom/prefix  the server mounts Chargewire under /custom/prefix
@@ -41,10 +57,28 @@ export const schemes: SchemeMap = Object.freeze({
 export function parseUrl(url: string): URL {
   refuseForeignSpellings(url);
   try {
-    return parseChargewireUrl(url, schemes);
+    return parseChargewireUrl(url, schemesFor(url));
   } catch (err) {
     throw rebrand(err);
   }
+}
+
+/**
+ * The schemes for `url`: {@link schemes}, except that a `hardcharger://` URI naming no port and a
+ * GizmoData Cloud host defaults to port 443 ({@link gizmodataCloudPort}) instead of 31337. An
+ * explicit port always wins.
+ */
+export function schemesFor(url: unknown): SchemeMap {
+  if (typeof url !== "string" || !/^hardcharger:\/\//iu.test(url.trim())) return schemes;
+  let parsed: URL;
+  try {
+    // hardcharger: is not a special scheme, so the URL keeps the port exactly as written.
+    parsed = new URL(url.trim());
+  } catch {
+    return schemes; // the Chargewire client's parser reports it
+  }
+  if (parsed.port !== "" || !isGizmodataCloudHost(parsed.hostname)) return schemes;
+  return { ...schemes, [scheme]: { ...schemes[scheme]!, defaultPort: gizmodataCloudPort } };
 }
 
 /** Refusals the Chargewire client would phrase without naming the Hardcharger spelling. */

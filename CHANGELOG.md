@@ -6,6 +6,17 @@ All notable changes to `@gizmodata/hardcharger` are documented here. The format 
 
 ## [Unreleased]
 
+## [2.3.0] - 2026-11-05
+
+### Added
+
+- A `hardcharger://` URL with no port and a GizmoData Cloud host (`gizmodata.com` or a name under
+  it, in any case, a trailing dot allowed) goes to port 443, where GizmoData Cloud clusters answer,
+  instead of 31337. Only whole labels match (`evilgizmodata.com` and `gizmodata.com.example.org`
+  keep 31337), an explicit port always wins, and every other host keeps 31337. `connect`,
+  `parseUrl` and browser sign-in follow it; `isGizmodataCloudHost`, `gizmodataCloudPort` and
+  `schemesFor(url)` are exported. The Hardcharger CLI and web UI get the same rule in 2.8.0.
+
 ## [2.2.1] - 2026-11-05
 
 ### Fixed

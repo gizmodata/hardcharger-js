@@ -33,8 +33,8 @@ so this package is a thin layer on the [Chargewire JavaScript client](https://gi
 driver and [hardcharger-jdbc](https://github.com/gizmodata/hardcharger-jdbc) on the Chargewire JDBC
 driver. It adds:
 
-- 🏎️ **`hardcharger://` URLs**, with Hardcharger's port 31337 as the default, meaning exactly
-  what they mean in the ADBC driver;
+- 🏎️ **`hardcharger://` URLs**, with Hardcharger's port 31337 as the default (443 for a GizmoData
+  Cloud host), meaning exactly what they mean in the ADBC driver;
 - 🪪 **`authType: "mtls"`**, the ADBC and JDBC drivers' name for client certificate sign-in;
 - 🏷️ **Hardcharger names** for the Chargewire client's classes (`HardchargerError`,
   `HardchargerConnection`, `HardchargerErrorCode`): the same objects, so `instanceof` works
@@ -46,7 +46,7 @@ Deno, Bun and Cloudflare Workers, no native code. Its whole API comes through th
 so you never import `@gizmodata/chargewire` yourself. For a Chargewire server other than
 Hardcharger, use `@gizmodata/chargewire` directly.
 
-> **Status: 2.2.1, with Hardcharger 2.7.0.** Built on `@gizmodata/chargewire` 2.2.1 (chargewire-js
+> **Status: 2.3.0, with Hardcharger 2.7.0.** Built on `@gizmodata/chargewire` 2.2.1 (chargewire-js
 > `56df77e`, Chargewire protocol 1.0.0); tested against `hardcharger-server` from Hardcharger's main
 > branch.
 
@@ -128,13 +128,13 @@ application and the client share one copy of Arrow's classes.
 
 ## 🔗 URLs
 
-| URL                                       | Meaning                                             |
-| ----------------------------------------- | --------------------------------------------------- |
-| `hardcharger://host`                      | HTTPS to `host:31337`                               |
-| `hardcharger://host:port`                 | HTTPS to another port                               |
-| `hardcharger://host?tls=false`            | Plain HTTP (development, loopback)                  |
-| `hardcharger://host:port/custom/prefix`   | The server mounts Chargewire under `/custom/prefix` |
-| `chargewire://…`, `https://…`, `http://…` | The Chargewire client's own spellings, as they are  |
+| URL                                       | Meaning                                                |
+| ----------------------------------------- | ------------------------------------------------------ |
+| `hardcharger://host`                      | HTTPS to `host:31337` (`host:443` for GizmoData Cloud) |
+| `hardcharger://host:port`                 | HTTPS to another port                                  |
+| `hardcharger://host?tls=false`            | Plain HTTP (development, loopback)                     |
+| `hardcharger://host:port/custom/prefix`   | The server mounts Chargewire under `/custom/prefix`    |
+| `chargewire://…`, `https://…`, `http://…` | The Chargewire client's own spellings, as they are     |
 
 `hardcharger://` means exactly what Chargewire's `chargewire://` means, so TLS is on unless the URL says
 `?tls=false` (or `tls=0`; `true` and `1` keep it on). These are the URLs the ADBC driver
@@ -147,9 +147,16 @@ accepts. Refused before anything is sent, each with a `client_invalid_argument` 
 - credentials in the URL (pass `username` and `password`), any other URL parameter, a URL
   without a host or with a scheme the client doesn't know.
 
+**GizmoData Cloud.** A `hardcharger://` URL with no port and a GizmoData Cloud host
+(`gizmodata.com`, or any name under it such as `my-cluster.us-east-1.aws.gizmodata.com`, in any
+case, a trailing dot allowed) goes to port 443, where GizmoData Cloud clusters answer, instead of 31337. Only whole labels match, so `evilgizmodata.com` and `gizmodata.com.example.org` keep 31337,
+and an explicit port always wins (`hardcharger://my-cluster.gizmodata.com:31337` is port 31337).
+`isGizmodataCloudHost(host)` and `gizmodataCloudPort` (443) say the same in code.
+
 `parseUrl(url)` shows the Chargewire base URL a URL stands for (`hardcharger://db.example.com` →
-`https://db.example.com:31337/chargewire`) and throws the errors above; `schemes` is the scheme map
-`connect` hands the Chargewire client, which does the parsing.
+`https://db.example.com:31337/chargewire`) and throws the errors above; `schemesFor(url)` is the
+scheme map `connect` hands the Chargewire client for that URL (`schemes`, with port 443 for a
+GizmoData Cloud host), which does the parsing.
 
 ## ⚙️ Options
 
@@ -286,7 +293,7 @@ same calls as in Node.
 | `connect(options)`                                                                                                                            | a `Connection` (`HardchargerConnection`): `query`, `stream`, `execute`, `prepare`, `ingest`, `metadata`, `transaction`, `close`, ... |
 | `HardchargerError` (= `ChargewireError`)                                                                                                      | every error the client raises: `code`, `status`, `sqlstate`, `detail`, `requestId`, ...                                              |
 | `HardchargerErrorCode` (= `ErrorCode`)                                                                                                        | the codes, e.g. `HardchargerErrorCode.sqlError` is `"sql_error"`                                                                     |
-| `parseUrl(url)`, `schemes`, `scheme`, `defaultPort`                                                                                           | the URL translation above; `"hardcharger"`, `31337`                                                                                  |
+| `parseUrl(url)`, `schemes`, `schemesFor(url)`, `scheme`, `defaultPort`, `gizmodataCloudPort`, `isGizmodataCloudHost(host)`                    | the URL translation above; `"hardcharger"`, `31337`, `443` and the GizmoData Cloud host test                                         |
 | `version`                                                                                                                                     | this package's version                                                                                                               |
 | `Connection`, `PreparedStatement`, `ResultStream`, `Metadata`, `Capability`, `ChargewireError`, `ErrorCode`                                   | the Chargewire client's, under their own names                                                                                       |
 | types: `ConnectOptions`, `CallOptions`, `StatementOptions`, `IngestOptions`, `Parameters`, `TlsOptions`, `ColumnInfo`, `ProblemDocument`, ... | the Chargewire client's types                                                                                                        |
