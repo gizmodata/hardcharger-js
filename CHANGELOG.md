@@ -6,6 +6,16 @@ All notable changes to `@gizmodata/hardcharger` are documented here. The format 
 
 ## [Unreleased]
 
+## [2.2.1] - 2026-11-05
+
+### Fixed
+
+- Built on `@gizmodata/chargewire` 2.2.1 (chargewire-js `56df77e`; the dependency range is now
+  `^2.2.1`): a request that finds its session lost no longer runs again on the new session after
+  the old one ran a statement whose first word is `USE`, `SET`, `RESET` or `PRAGMA`. An `INSERT INTO
+  t` run again after a SQL `USE other_schema` wrote to the default schema's table, without an error;
+  it now fails with `session_not_found`, and the next call runs on the new session.
+
 ## [2.2.0] - 2026-11-05
 
 ### Added

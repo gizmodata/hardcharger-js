@@ -46,8 +46,8 @@ Deno, Bun and Cloudflare Workers, no native code. Its whole API comes through th
 so you never import `@gizmodata/chargewire` yourself. For a Chargewire server other than
 Hardcharger, use `@gizmodata/chargewire` directly.
 
-> **Status: 2.2.0, with Hardcharger 2.7.0.** Built on `@gizmodata/chargewire` 2.2.0 (chargewire-js
-> `5380630`, Chargewire protocol 1.0.0); tested against `hardcharger-server` from Hardcharger's main
+> **Status: 2.2.1, with Hardcharger 2.7.0.** Built on `@gizmodata/chargewire` 2.2.1 (chargewire-js
+> `56df77e`, Chargewire protocol 1.0.0); tested against `hardcharger-server` from Hardcharger's main
 > branch.
 
 | Package                               | What it is                                                              |
@@ -321,8 +321,9 @@ statement runs on a new session, without a new sign-in. A session the server los
 (`session_not_found`: a restart, an idle eviction) is replaced too, and the request that found it
 runs again on the new session only when no transaction can have been open in the old one:
 autocommit on, and no SQL that can begin a transaction (`BEGIN`, `START TRANSACTION`, anything
-naming autocommit) ran there. Otherwise it fails with `session_not_found`, and the next call
-runs on the new session. Other `session_ended` reasons (`killed`,
+naming autocommit) ran there, and no statement whose first word is `USE`, `SET`, `RESET` or
+`PRAGMA` did (the new session has the connection's options, not what SQL set). Otherwise it fails
+with `session_not_found`, and the next call runs on the new session. Other `session_ended` reasons (`killed`,
 `credentials_changed`, `principal_dropped`, `token_revoked`, and `token_expired` when the token
 can't be renewed) are not cured by a new session: they are the error, and a new connection is
 the way on.
