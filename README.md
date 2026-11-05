@@ -46,8 +46,8 @@ Deno, Bun and Cloudflare Workers, no native code. Its whole API comes through th
 so you never import `@gizmodata/chargewire` yourself. For a Chargewire server other than
 Hardcharger, use `@gizmodata/chargewire` directly.
 
-> **Status: 2.1.1, with Hardcharger 2.7.0.** Built on `@gizmodata/chargewire` 2.1.0 (chargewire-js
-> `8a4ed78`, Chargewire protocol 1.0.0); tested against `hardcharger-server` from Hardcharger's main
+> **Status: 2.2.0, with Hardcharger 2.7.0.** Built on `@gizmodata/chargewire` 2.2.0 (chargewire-js
+> `5380630`, Chargewire protocol 1.0.0); tested against `hardcharger-server` from Hardcharger's main
 > branch.
 
 | Package                               | What it is                                                              |
@@ -168,6 +168,29 @@ each one. What differs:
 | `authType` | also `"mtls"`, the same as `"client_certificate"`, and `"external"`, the same as `"oauth_browser"` (as in the ADBC and JDBC drivers) |
 | `schemes`  | not taken: the URL schemes are this package's (use `@gizmodata/chargewire` for schemes of your own)                                  |
 | `logger`   | warnings (a session the server lost and the client replaced, say) are printed with `[hardcharger]`                                   |
+
+**A server that is resuming.** A stopped server that is starting again (a GizmoData Cloud cluster
+with auto-resume) answers `server_resuming` with a `Retry-After`. The client waits and sends the
+same request again, the sign-in included, for up to `resumeTimeout` seconds (default `600`; `0`
+reports the first answer at once as `server_resuming`). `onResuming` is called before each wait
+with `{ attempt, retryAfterMs, elapsedMs, resumeTimeoutMs, detail }`, so an app can say "the
+server is resuming" instead of looking frozen; aborting `connect`'s or a call's `signal` stops the
+wait at once. An exception `onResuming` throws is ignored.
+
+```js
+import { connect } from "@gizmodata/hardcharger";
+
+const controller = new AbortController(); // a Cancel button calls controller.abort()
+const conn = await connect({
+  url: "hardcharger://db.example.com",
+  username: "joe",
+  password,
+  resumeTimeout: 300,
+  signal: controller.signal,
+  onResuming: ({ attempt, elapsedMs }) =>
+    console.log(`the server is resuming (attempt ${attempt}, ${Math.round(elapsedMs / 1000)} s)`),
+});
+```
 
 ## 🪪 Client certificate sign-in (mutual TLS)
 
@@ -294,7 +317,12 @@ A session the server ended because its transaction sat idle past the server's
 `reason: "idle_in_transaction"`: the transaction was rolled back, and the statement that found it
 ended fails with that error and is never run again, whether the transaction began with
 `setAutocommit(false)`, `transaction()` or `BEGIN` in SQL. The connection carries on: the next
-statement runs on a new session, without a new sign-in. Other `session_ended` reasons (`killed`,
+statement runs on a new session, without a new sign-in. A session the server lost
+(`session_not_found`: a restart, an idle eviction) is replaced too, and the request that found it
+runs again on the new session only when no transaction can have been open in the old one:
+autocommit on, and no SQL that can begin a transaction (`BEGIN`, `START TRANSACTION`, anything
+naming autocommit) ran there. Otherwise it fails with `session_not_found`, and the next call
+runs on the new session. Other `session_ended` reasons (`killed`,
 `credentials_changed`, `principal_dropped`, `token_revoked`, and `token_expired` when the token
 can't be renewed) are not cured by a new session: they are the error, and a new connection is
 the way on.
