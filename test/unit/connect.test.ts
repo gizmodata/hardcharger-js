@@ -300,3 +300,90 @@ describe("the package's surface", () => {
     expect(hardcharger.defaultPort).toBe(31337);
   });
 });
+
+describe("a server that is resuming (resumeTimeout, onResuming)", () => {
+  /** A Hardcharger front door that answers the first `times` sign-ins with server_resuming. */
+  function resumingServer(times: number, retryAfter: string): { fetch: typeof fetch; urls: string[] } {
+    const urls: string[] = [];
+    let logins = 0;
+    const json = (status: number, body: unknown, headers: Record<string, string> = {}): Response =>
+      new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json", ...headers } });
+    const fake: typeof fetch = (input, init) => {
+      const url = input instanceof Request ? input.url : input instanceof URL ? input.href : input;
+      urls.push(url);
+      const path = new URL(url).pathname;
+      const method = init?.method ?? "GET";
+      if (path === "/chargewire")
+        return Promise.resolve(json(200, { protocol: "chargewire", protocol_versions: ["1"], capabilities: [] }));
+      if (path === "/chargewire/v1/auth/token") {
+        return Promise.resolve(
+          ++logins <= times
+            ? json(
+                503,
+                { code: "server_resuming", status: 503, detail: "the cluster is starting" },
+                { "retry-after": retryAfter },
+              )
+            : json(200, { access_token: "t1", token_type: "Bearer", expires_in: 3600 }),
+        );
+      }
+      if (path === "/chargewire/v1/sessions" && method === "POST")
+        return Promise.resolve(json(201, { session_id: "s1", options: {}, transaction: "none" }));
+      return Promise.resolve(new Response(null, { status: 204 }));
+    };
+    return { fetch: fake, urls };
+  }
+
+  test("onResuming is told each wait, and the sign-in goes through once the server is back", async () => {
+    const server = resumingServer(2, "1");
+    const events: hardcharger.ResumingEvent[] = [];
+    const conn = await connect({
+      url: "hardcharger://db.example.com",
+      username: "joe",
+      password: "pw",
+      fetch: server.fetch,
+      resumeTimeout: 30,
+      onResuming: (event) => events.push(event),
+    });
+    expect(events.map((e) => [e.attempt, e.retryAfterMs, e.resumeTimeoutMs, e.detail])).toEqual([
+      [1, 1000, 30_000, "the cluster is starting"],
+      [2, 1000, 30_000, "the cluster is starting"],
+    ]);
+    expect(events[0]!.elapsedMs).toBe(0);
+    expect(events[1]!.elapsedMs).toBeGreaterThanOrEqual(900);
+    // The hardcharger:// URL's default port, every time.
+    expect(server.urls.every((u) => u.startsWith("https://db.example.com:31337/chargewire"))).toBe(true);
+    await conn.close();
+  }, 15_000);
+
+  test("resumeTimeout 0 reports the first server_resuming at once", async () => {
+    const server = resumingServer(1, "1");
+    let called = 0;
+    await expect(
+      connect({
+        url: "hardcharger://db.example.com",
+        username: "joe",
+        password: "pw",
+        fetch: server.fetch,
+        resumeTimeout: 0,
+        onResuming: () => called++,
+      }),
+    ).rejects.toMatchObject({ code: ErrorCode.serverResuming, status: 503 });
+    expect(called).toBe(0);
+  });
+
+  test("connect's signal stops the wait at once", async () => {
+    const server = resumingServer(Number.MAX_SAFE_INTEGER, "60");
+    const controller = new AbortController();
+    const started = performance.now();
+    const work = connect({
+      url: "hardcharger://db.example.com",
+      username: "joe",
+      password: "pw",
+      fetch: server.fetch,
+      signal: controller.signal,
+      onResuming: () => setTimeout(() => controller.abort(), 20),
+    });
+    await expect(work).rejects.toMatchObject({ code: ErrorCode.statementCancelled });
+    expect(performance.now() - started).toBeLessThan(2000);
+  });
+});

@@ -6,6 +6,27 @@ All notable changes to `@gizmodata/hardcharger` are documented here. The format 
 
 ## [Unreleased]
 
+## [2.2.0] - 2026-11-05
+
+### Added
+
+- `resumeTimeout` and `onResuming` (from `@gizmodata/chargewire` 2.2.0), documented in the README
+  and covered by a unit test on a `hardcharger://` URL: a server that is starting again after a
+  stop (a GizmoData Cloud cluster with auto-resume) answers `server_resuming`, and the client waits
+  out its `Retry-After` and sends the request again, the sign-in included, for up to
+  `resumeTimeout` seconds (default 600). `onResuming` is told each wait (`ResumingEvent`, now
+  exported), and aborting a call's or `connect`'s `signal` stops the wait at once.
+
+### Changed
+
+- Built on `@gizmodata/chargewire` 2.2.0 (chargewire-js `5380630`; the dependency range is now
+  `^2.2.0`). `SessionEndedReason` lists `idle_in_transaction`, so code can narrow on it. A request
+  that finds its session lost runs again on the replacement only when no transaction can have
+  been open in the lost session (Chargewire spec §5.7): after SQL `BEGIN`, the statement that
+  finds a `session_not_found` now fails instead of running alone in autocommit, and a metadata
+  or session request that finds such a loss fails instead of hiding it. `close()` no longer
+  waits for a resuming server.
+
 ## [2.1.1] - 2026-11-04
 
 ### Added
