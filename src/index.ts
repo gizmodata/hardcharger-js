@@ -4,7 +4,7 @@
  * @packageDocumentation
  * The JavaScript/TypeScript client for Hardcharger, GizmoData's DuckDB 2.0 server: a thin
  * layer on the Chargewire client (`@gizmodata/chargewire`) that accepts `hardcharger://` URLs,
- * with Hardcharger's port 31337 as the default. Everything else (Arrow results, bind
+ * with Hardcharger's port 31337 as the default (443 for a GizmoData Cloud host). Everything else (Arrow results, bind
  * parameters, split results, ingest, transactions, cancel, TLS and client certificates) is
  * the Chargewire client's, re-exported here so you never import it yourself.
  *
@@ -33,12 +33,12 @@ import {
   startBrowserSignIn as chargewireStartBrowserSignIn,
 } from "@gizmodata/chargewire";
 
-import { clientInvalidArgument, parseUrl, schemes } from "./uri.js";
+import { clientInvalidArgument, parseUrl, schemesFor } from "./uri.js";
 
-export { defaultPort, parseUrl, scheme, schemes } from "./uri.js";
+export { defaultPort, gizmodataCloudPort, isGizmodataCloudHost, parseUrl, scheme, schemes, schemesFor } from "./uri.js";
 
 /** This package's version. */
-export const version = "2.2.1";
+export const version = "2.3.0";
 
 /**
  * `connect`'s options: the Chargewire client's, with `url` also taking `hardcharger://` URLs and
@@ -48,7 +48,8 @@ export const version = "2.2.1";
  */
 export interface ConnectOptions extends Omit<ChargewireConnectOptions, "schemes" | "authType"> {
   /**
-   * `hardcharger://host[:port][/prefix][?tls=false]` (HTTPS to port 31337 unless it says
+   * `hardcharger://host[:port][/prefix][?tls=false]` (HTTPS to port 31337, or 443 for a GizmoData
+   * Cloud host such as `cluster.gizmodata.com`, unless it says
    * otherwise), or the Chargewire client's `chargewire://`, `https://` and `http://`.
    */
   url: string;
@@ -88,7 +89,11 @@ export async function connect(options: ConnectOptions): Promise<Connection> {
   }
   parseUrl(options.url); // a bad URL is refused here, in Hardcharger's words, before anything is sent
   const { authType, logger, ...rest } = options;
-  const chargewireOptions: ChargewireConnectOptions = { ...rest, schemes, logger: logger ?? defaultLogger };
+  const chargewireOptions: ChargewireConnectOptions = {
+    ...rest,
+    schemes: schemesFor(options.url),
+    logger: logger ?? defaultLogger,
+  };
   if (authType !== undefined) {
     chargewireOptions.authType =
       authType === "mtls" ? "client_certificate" : authType === "external" ? "oauth_browser" : authType;
@@ -99,11 +104,11 @@ export async function connect(options: ConnectOptions): Promise<Connection> {
 /** Which server a browser sign-in is for: the Chargewire client's, with `hardcharger://` URLs. */
 export type BrowserSignInTarget = Omit<ChargewireBrowserSignInTarget, "schemes">;
 
-function target<T extends BrowserSignInTarget>(options: T): T & { schemes: typeof schemes } {
+function target<T extends BrowserSignInTarget>(options: T): T & { schemes: ReturnType<typeof schemesFor> } {
   if (options === null || typeof options !== "object")
     throw clientInvalidArgument("browser sign-in takes an options object");
   parseUrl(options.url);
-  return { ...options, schemes };
+  return { ...options, schemes: schemesFor(options.url) };
 }
 
 /** Starts a browser sign-in flow (the Chargewire client's `startBrowserSignIn`, for `hardcharger://` URLs). */

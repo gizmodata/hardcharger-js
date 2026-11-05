@@ -6,7 +6,16 @@
 
 import { describe, expect, test } from "vitest";
 
-import { ErrorCode, HardchargerError, defaultPort, parseUrl, schemes } from "../../src/index.js";
+import {
+  ErrorCode,
+  HardchargerError,
+  defaultPort,
+  gizmodataCloudPort,
+  isGizmodataCloudHost,
+  parseUrl,
+  schemes,
+  schemesFor,
+} from "../../src/index.js";
 
 describe("accepted URLs", () => {
   test.each([
@@ -50,6 +59,60 @@ describe("accepted URLs", () => {
   test("the default port is Hardcharger's", () => {
     expect(defaultPort).toBe(31337);
     expect(new URL(parseUrl("hardcharger://h").href).port).toBe(String(defaultPort));
+  });
+});
+
+describe("GizmoData Cloud hosts default to port 443", () => {
+  test.each([
+    ["hardcharger://my-cluster.gizmodata.com", "https://my-cluster.gizmodata.com/chargewire"],
+    ["hardcharger://gizmodata.com", "https://gizmodata.com/chargewire"],
+    [
+      "hardcharger://My-Cluster.US-East-1.AWS.GizmoData.COM",
+      "https://my-cluster.us-east-1.aws.gizmodata.com/chargewire",
+    ],
+    ["HARDCHARGER://c.gizmodata.com.", "https://c.gizmodata.com./chargewire"],
+    ["hardcharger://c.gizmodata.com:", "https://c.gizmodata.com/chargewire"],
+    ["hardcharger://c.gizmodata.com/custom/prefix", "https://c.gizmodata.com/custom/prefix"],
+    ["hardcharger://c.gizmodata.com?tls=false", "http://c.gizmodata.com:443/chargewire"],
+  ])("%s -> %s (port 443)", (url, base) => {
+    expect(parseUrl(url).href).toBe(base);
+  });
+
+  test.each([
+    // An explicit port always wins.
+    ["hardcharger://c.gizmodata.com:31337", "https://c.gizmodata.com:31337/chargewire"],
+    ["hardcharger://c.gizmodata.com:8443", "https://c.gizmodata.com:8443/chargewire"],
+    // Look-alikes are other hosts: Hardcharger's port.
+    ["hardcharger://evilgizmodata.com", "https://evilgizmodata.com:31337/chargewire"],
+    ["hardcharger://gizmodata.com.example.org", "https://gizmodata.com.example.org:31337/chargewire"],
+    ["hardcharger://gizmodata.co", "https://gizmodata.co:31337/chargewire"],
+    ["hardcharger://c.gizmodata.community", "https://c.gizmodata.community:31337/chargewire"],
+    ["hardcharger://gizmodata.com..", "https://gizmodata.com..:31337/chargewire"],
+    // Other schemes keep their own defaults.
+    ["chargewire://c.gizmodata.com", "https://c.gizmodata.com/chargewire"],
+  ])("%s -> %s", (url, base) => {
+    expect(parseUrl(url).href).toBe(base);
+  });
+
+  test("which hosts are GizmoData Cloud's", () => {
+    expect(gizmodataCloudPort).toBe(443);
+    for (const host of ["gizmodata.com", "GIZMODATA.COM", "a.gizmodata.com", "a.b.gizmodata.com.", "gizmodata.com."]) {
+      expect(isGizmodataCloudHost(host), host).toBe(true);
+    }
+    for (const host of [
+      "evilgizmodata.com",
+      "gizmodata.com.example.org",
+      "gizmodata.co",
+      "xgizmodata.com",
+      "gizmodata",
+      "",
+    ]) {
+      expect(isGizmodataCloudHost(host), host).toBe(false);
+    }
+    // The shared schemes stay as they are; only the copy for a cloud URL changes the default.
+    expect(schemesFor("hardcharger://c.gizmodata.com").hardcharger?.defaultPort).toBe(443);
+    expect(schemesFor("hardcharger://c.gizmodata.com:31337")).toBe(schemes);
+    expect(schemes.hardcharger?.defaultPort).toBe(31337);
   });
 });
 

@@ -355,6 +355,37 @@ describe("a server that is resuming (resumeTimeout, onResuming)", () => {
     await conn.close();
   }, 15_000);
 
+  test("a GizmoData Cloud host without a port is reached at 443; an explicit port wins; look-alikes get 31337", async () => {
+    const cases: Array<[string, string]> = [
+      ["hardcharger://my-cluster.gizmodata.com", "https://my-cluster.gizmodata.com/chargewire"],
+      ["hardcharger://my-cluster.gizmodata.com:31337", "https://my-cluster.gizmodata.com:31337/chargewire"],
+      ["hardcharger://evilgizmodata.com", "https://evilgizmodata.com:31337/chargewire"],
+      ["hardcharger://gizmodata.com.example.org", "https://gizmodata.com.example.org:31337/chargewire"],
+    ];
+    for (const [url, base] of cases) {
+      const server = resumingServer(0, "1");
+      const conn = await connect({ url, username: "joe", password: "pw", fetch: server.fetch });
+      expect(server.urls.length, url).toBeGreaterThan(0);
+      expect(
+        server.urls.every((u) => u.startsWith(base)),
+        `${url}: ${server.urls.join(", ")}`,
+      ).toBe(true);
+      await conn.close();
+    }
+    // Browser sign-in goes to the same place.
+    const seen: string[] = [];
+    await hardcharger
+      .startBrowserSignIn({
+        url: "hardcharger://my-cluster.gizmodata.com",
+        fetch: (input) => {
+          seen.push(input instanceof Request ? input.url : input instanceof URL ? input.href : input);
+          return Promise.resolve(new Response("{}", { status: 500 }));
+        },
+      })
+      .catch(() => undefined);
+    expect(seen[0]).toBe("https://my-cluster.gizmodata.com/chargewire/v1/auth/oauth/flows");
+  });
+
   test("resumeTimeout 0 reports the first server_resuming at once", async () => {
     const server = resumingServer(1, "1");
     let called = 0;

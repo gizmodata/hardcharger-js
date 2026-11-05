@@ -11,7 +11,9 @@ import { mkdtempSync, readFileSync, readdirSync, rmSync, statSync } from "node:f
 import { tmpdir } from "node:os";
 import { join, relative } from "node:path";
 
-const maxDistBytes = 32 * 1024;
+// This layer's four files are ~37 KB with 2.3.0's GizmoData Cloud port rule; the Chargewire client
+// bundled in by mistake would add hundreds of KB (and trips the markers check below too).
+const maxDistBytes = 48 * 1024;
 const problems = [];
 const dir = mkdtempSync(join(tmpdir(), "hardcharger-js-pack-"));
 try {
