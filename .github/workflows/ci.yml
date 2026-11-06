@@ -123,7 +123,7 @@ jobs:
           path: .chargewire
       - run: npm ci
       # The floors of package.json's ranges: apache-arrow (peer) 21.2.0, and @gizmodata/chargewire
-      # 2.2.1 (the tarball, built from the pinned commit).
+      # 2.3.0 (the tarball, built from the pinned commit).
       - name: Install exactly the floors
         run: |
           npm install --no-save apache-arrow@21.2.0
