@@ -46,8 +46,8 @@ Deno, Bun and Cloudflare Workers, no native code. Its whole API comes through th
 so you never import `@gizmodata/chargewire` yourself. For a Chargewire server other than
 Hardcharger, use `@gizmodata/chargewire` directly.
 
-> **Status: 2.3.0, with Hardcharger 2.7.0.** Built on `@gizmodata/chargewire` 2.2.1 (chargewire-js
-> `56df77e`, Chargewire protocol 1.0.0); tested against `hardcharger-server` from Hardcharger's main
+> **Status: 2.4.0, with Hardcharger 2.7.0.** Built on `@gizmodata/chargewire` 2.3.0 (chargewire-js
+> `3e29854`, Chargewire protocol 1.0.0); tested against `hardcharger-server` from Hardcharger's main
 > branch.
 
 | Package                               | What it is                                                              |
@@ -407,3 +407,21 @@ on npmjs.com, `@gizmodata/hardcharger`'s trusted publisher is this repository's 
   <sub>Built by <a href="https://gizmodata.com">GizmoData™</a></sub><br>
   <sub>Hardcharger™ and GizmoData™ are trademarks of GizmoData LLC.</sub>
 </p>
+
+### Query progress and statement metadata
+
+`onProgress` and `ResultStream.statement()` are available directly through this package:
+
+```ts
+const rows = conn.stream("SELECT * FROM large_table", undefined, {
+  onProgress: (statement) => console.log(statement.state, statement.progress?.fraction),
+});
+const metadata = await rows.statement();
+for await (const batch of rows) {
+  // Consume rows as they arrive.
+}
+```
+
+These additions preserve the existing APIs and Chargewire protocol version. Progress is optional;
+servers without estimates report status without a percentage. A statement snapshot may precede
+completion and does not rerun SQL or retain the result.

@@ -209,3 +209,26 @@ describe("errors", () => {
     expect(err.code).toBe(ErrorCode.clientConnectionClosed);
   });
 });
+
+// Run against the same released server as the existing suite: the additive API must
+// work without requiring a server upgrade or a progress percentage.
+test("progress and execution snapshots preserve streaming against older servers", async () => {
+  const states: string[] = [];
+  const stream = conn.stream("SELECT i FROM range(100000) t(i)", undefined, {
+    onProgress: (document) => states.push(document.state),
+    signal: AbortSignal.timeout(15000),
+  });
+  const document = await stream.statement();
+  expect(document?.statement_id).toBeTruthy();
+  let rows = 0;
+  for await (const batch of stream) rows += batch.numRows;
+  expect(rows).toBe(100000);
+  expect(states.length).toBeGreaterThan(0);
+  expect((await stream.statement())?.statement_id).toBe(document?.statement_id);
+  await conn.execute("CREATE TEMP TABLE progress_compat(i INTEGER)", undefined, {
+    onProgress: () => {
+      throw new Error("observer failure must not fail SQL");
+    },
+  });
+  expect(await scalar(conn, "SELECT count(*) FROM progress_compat")).toBe(0n);
+});

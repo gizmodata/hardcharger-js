@@ -6,6 +6,16 @@ All notable changes to `@gizmodata/hardcharger` are documented here. The format 
 
 ## [Unreleased]
 
+## [2.4.0] - 2026-11-06
+
+### Added
+
+- Inherit optional live query progress (`onProgress`) and `ResultStream.statement()` snapshots from Chargewire JS 2.3.0. Existing connection, query and URL behavior is unchanged.
+
+### Changed
+
+- Require `@gizmodata/chargewire` ^2.3.0 and update the reproducible development/CI pin to its public release.
+
 ## [2.3.0] - 2026-11-05
 
 ### Added
