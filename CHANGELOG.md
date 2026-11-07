@@ -6,6 +6,20 @@ All notable changes to `@gizmodata/hardcharger` are documented here. The format 
 
 ## [Unreleased]
 
+## [2.4.4] - 2026-11-07
+
+### Fixed
+
+- A new connection handed a token from before a person stopped the cluster (a `tokenProvider`'s or
+  a single sign-on's cache) no longer fails its first request with `token_revoked`: it signs in
+  again once with its own method, browser sign-in included (from `@gizmodata/chargewire` 2.3.5). A
+  connection that was in use still never signs in on its own after `token_revoked`, and a `token`
+  given to `connect` still fails, now saying it was revoked and to sign in again.
+
+### Changed
+
+- Require `@gizmodata/chargewire` ^2.3.5 and pin development/CI to chargewire-js `36352f4` (2.3.5).
+
 ## [2.4.3] - 2026-11-07
 
 ### Changed
