@@ -8,6 +8,15 @@ All notable changes to `@gizmodata/hardcharger` are documented here. The format 
 
 ## [2.4.2] - 2026-11-07
 
+### Added
+
+- Lazy connect to a stopped server (from `@gizmodata/chargewire` 2.3.3): when a server's discovery
+  document says `"state": "stopped"` (GizmoData Cloud's resume holder for a cluster stopped while
+  idle), `connect` returns without signing in or opening a session, and the first call that does
+  work signs in, which starts the cluster. A connection opened for nothing (a pool refilling, an app
+  connecting at startup) no longer wakes it; closing such a connection sends nothing, and a wrong
+  password is the first call's error.
+
 ### Fixed
 
 - `transaction()`'s clean-up (the rollback after an error, and turning autocommit back on) and
@@ -17,7 +26,7 @@ All notable changes to `@gizmodata/hardcharger` are documented here. The format 
 
 ### Changed
 
-- Require `@gizmodata/chargewire` ^2.3.2 and pin development/CI to chargewire-js `60e7b82` (2.3.2).
+- Require `@gizmodata/chargewire` ^2.3.3 and pin development/CI to chargewire-js `ca7940a` (2.3.3).
 
 ## [2.4.1] - 2026-11-06
 
