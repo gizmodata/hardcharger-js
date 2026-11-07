@@ -38,7 +38,7 @@ import { clientInvalidArgument, parseUrl, schemesFor } from "./uri.js";
 export { defaultPort, gizmodataCloudPort, isGizmodataCloudHost, parseUrl, scheme, schemes, schemesFor } from "./uri.js";
 
 /** This package's version. */
-export const version = "2.4.3";
+export const version = "2.4.4";
 
 /**
  * `connect`'s options: the Chargewire client's, with `url` also taking `hardcharger://` URLs and
