@@ -6,6 +6,16 @@ All notable changes to `@gizmodata/hardcharger` are documented here. The format 
 
 ## [Unreleased]
 
+## [2.4.3] - 2026-11-07
+
+### Changed
+
+- Lazy connect keeps session options until the first request (from `@gizmodata/chargewire` 2.3.4):
+  `setOptions` and `setAutocommit` on a connection made to a stopped cluster no longer sign in
+  and start it; they are sent right after the session is created, before the first call, which a
+  refused option fails. `commit()`/`rollback()` before the first call send nothing.
+- Require `@gizmodata/chargewire` ^2.3.4 and pin development/CI to chargewire-js `ce05df6` (2.3.4).
+
 ## [2.4.2] - 2026-11-07
 
 ### Added
