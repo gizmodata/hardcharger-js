@@ -6,6 +6,19 @@ All notable changes to `@gizmodata/hardcharger` are documented here. The format 
 
 ## [Unreleased]
 
+## [2.4.2] - 2026-11-07
+
+### Fixed
+
+- `transaction()`'s clean-up (the rollback after an error, and turning autocommit back on) and
+  `onProgress` polls no longer sign in or open a session (from `@gizmodata/chargewire` 2.3.2), so
+  they don't wake a Hardcharger cluster that GizmoData Cloud stopped while idle (auto-resume). A
+  clean-up that can't reach the session gives it up, and the next call opens a new one.
+
+### Changed
+
+- Require `@gizmodata/chargewire` ^2.3.2 and pin development/CI to chargewire-js `60e7b82` (2.3.2).
+
 ## [2.4.1] - 2026-11-06
 
 ### Fixed
