@@ -6,6 +6,20 @@ All notable changes to `@gizmodata/hardcharger` are documented here. The format 
 
 ## [Unreleased]
 
+## [2.4.1] - 2026-11-06
+
+### Fixed
+
+- Closing a connection, statement or prepared statement, and cancelling a statement, no longer
+  signs in (from `@gizmodata/chargewire` 2.3.1). A connection closed in the last minutes of its
+  token's life used to renew the token first, and that sign-in woke a Hardcharger cluster that
+  GizmoData Cloud had stopped while idle (auto-resume), or undid a deliberate Stop. Closes and
+  cancels now go with the token the client has; one refused with `invalid_token` counts as done.
+
+### Changed
+
+- Require `@gizmodata/chargewire` ^2.3.1 and pin development/CI to chargewire-js `c7d4b1e` (2.3.1).
+
 ## [2.4.0] - 2026-11-06
 
 ### Added
