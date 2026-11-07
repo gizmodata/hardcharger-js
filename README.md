@@ -46,8 +46,8 @@ Deno, Bun and Cloudflare Workers, no native code. Its whole API comes through th
 so you never import `@gizmodata/chargewire` yourself. For a Chargewire server other than
 Hardcharger, use `@gizmodata/chargewire` directly.
 
-> **Status: 2.4.0, with Hardcharger 2.7.0.** Built on `@gizmodata/chargewire` 2.3.0 (chargewire-js
-> `3e29854`, Chargewire protocol 1.0.0); tested against `hardcharger-server` from Hardcharger's main
+> **Status: 2.4.1, with Hardcharger 2.7.0.** Built on `@gizmodata/chargewire` 2.3.1 (chargewire-js
+> `c7d4b1e`, Chargewire protocol 1.0.0); tested against `hardcharger-server` from Hardcharger's main
 > branch.
 
 | Package                               | What it is                                                              |
