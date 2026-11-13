@@ -46,8 +46,8 @@ Deno, Bun and Cloudflare Workers, no native code. Its whole API comes through th
 so you never import `@gizmodata/chargewire` yourself. For a Chargewire server other than
 Hardcharger, use `@gizmodata/chargewire` directly.
 
-> **Status: 2.4.4, with Hardcharger 2.7.0.** Built on `@gizmodata/chargewire` 2.3.5 (chargewire-js
-> `36352f4`, Chargewire protocol 1.0.0); tested against `hardcharger-server` from Hardcharger's main
+> **Status: 2.4.5, with Hardcharger 2.7.0.** Built on `@gizmodata/chargewire` 2.3.6 (chargewire-js
+> `ec4ba68`, Chargewire protocol 1.0.0); tested against `hardcharger-server` from Hardcharger's main
 > branch.
 
 | Package                               | What it is                                                              |
@@ -175,6 +175,14 @@ each one. What differs:
 | `authType` | also `"mtls"`, the same as `"client_certificate"`, and `"external"`, the same as `"oauth_browser"` (as in the ADBC and JDBC drivers) |
 | `schemes`  | not taken: the URL schemes are this package's (use `@gizmodata/chargewire` for schemes of your own)                                  |
 | `logger`   | warnings (a session the server lost and the client replaced, say) are printed with `[hardcharger]`                                   |
+
+**The current catalog and schema.** `catalog` and `schema` given to `connect`, or set later with
+`conn.setOptions({ catalog, schema })`, are the session's current catalog and schema. Given
+together, in one call, they name that catalog's schema, whichever comes first. Setting `catalog`
+alone moves the session to that catalog's default schema, as SQL `USE` does, and a schema set
+before it is forgotten: a new session that replaces a lost one, and a lazy connection's first
+session, open in the catalog's default schema too. To be in another catalog's schema, set both
+together, or the schema after the catalog.
 
 **A server that is resuming.** A stopped server that is starting again (a GizmoData Cloud cluster
 with auto-resume) answers `server_resuming` with a `Retry-After`. The client waits and sends the
@@ -329,7 +337,8 @@ statement runs on a new session, without a new sign-in. A session the server los
 runs again on the new session only when no transaction can have been open in the old one:
 autocommit on, and no SQL that can begin a transaction (`BEGIN`, `START TRANSACTION`, anything
 naming autocommit) ran there, and no statement whose first word is `USE`, `SET`, `RESET` or
-`PRAGMA` did (the new session has the connection's options, not what SQL set). Otherwise it fails
+`PRAGMA` did (the new session has the connection's options, not what SQL set; it opens in the
+catalog and schema those options left the old one in). Otherwise it fails
 with `session_not_found`, and the next call runs on the new session. Other `session_ended` reasons (`killed`,
 `credentials_changed`, `principal_dropped`, `token_revoked`, and `token_expired` when the token
 can't be renewed) are not cured by a new session: they are the error, and a new connection is

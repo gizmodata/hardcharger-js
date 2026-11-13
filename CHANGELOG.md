@@ -6,6 +6,36 @@ All notable changes to `@gizmodata/hardcharger` are documented here. The format 
 
 ## [Unreleased]
 
+## [2.4.5] - 2026-11-13
+
+### Fixed
+
+- A session that replaces a lost one (a restart, an idle eviction, an expired token) opens where
+  the lost one was, after the current schema and then the current catalog were set on a connection
+  (`conn.setOptions({ schema: "raw" })`, or `schema` given to `connect`, then
+  `conn.setOptions({ catalog: "lake" })`). Setting the catalog moves the session to that catalog's
+  default schema, as SQL `USE` does, but the client still remembered the schema and replayed both.
+  The new session opened in `lake.raw` when `lake` has a schema of that name, so later statements
+  ran in another schema than before the loss, without an error. When it has none, no new session
+  could be opened: every request from then on failed (`opening a replacement failed: … No catalog +
+  schema named "lake.raw" found`) and the connection was unusable. Every release of this package
+  did this. The client now forgets the schema when the catalog is set without one (from
+  `@gizmodata/chargewire` 2.3.6). A catalog the server refuses changes nothing, and a schema set
+  with the catalog or after it is replayed as before.
+- A lazy connection to a stopped cluster (2.4.3 and 2.4.4) had the same fault before it opened:
+  the schema, then the catalog, set before the first request were sent together, so the session
+  opened in `lake.raw`, or that first request failed (`session option "schema": … No catalog +
+  schema named "lake.raw" found`). The options now keep the order they were set in.
+
+A catalog and a schema given together (to `connect`, in `sessionOptions`, or in one `setOptions`
+call) were never affected, through `hardcharger://` URLs either: a live test now connects 40
+times in each form, lazy connections and a replaced session included.
+
+### Changed
+
+- Require `@gizmodata/chargewire` ^2.3.6 and pin development/CI to chargewire-js
+  `ec4ba68` (2.3.6).
+
 ## [2.4.4] - 2026-11-07
 
 ### Fixed
