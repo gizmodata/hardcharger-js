@@ -6,6 +6,8 @@ All notable changes to `@gizmodata/hardcharger` are documented here. The format 
 
 ## [Unreleased]
 
+## [2.4.5] - 2026-11-13
+
 ### Fixed
 
 - A session that replaces a lost one (a restart, an idle eviction, an expired token) opens where
@@ -28,6 +30,11 @@ All notable changes to `@gizmodata/hardcharger` are documented here. The format 
 A catalog and a schema given together (to `connect`, in `sessionOptions`, or in one `setOptions`
 call) were never affected, through `hardcharger://` URLs either: a live test now connects 40
 times in each form, lazy connections and a replaced session included.
+
+### Changed
+
+- Require `@gizmodata/chargewire` ^2.3.6 and pin development/CI to chargewire-js
+  `ec4ba68` (2.3.6).
 
 ## [2.4.4] - 2026-11-07
 
