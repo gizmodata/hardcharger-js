@@ -6,6 +6,18 @@ All notable changes to `@gizmodata/hardcharger` are documented here. The format 
 
 ## [Unreleased]
 
+## [2.5.0] - 2026-11-14
+
+### Added
+
+- Server-confirmed read-only connections through the Chargewire driver, with one-way
+  transitions and no writable fallback when the server does not support the option.
+
+### Changed
+
+- Require published `@gizmodata/chargewire` 2.4.0 or newer, and pin that release for development
+  and CI, including dependency-floor checks.
+
 ## [2.4.5] - 2026-11-13
 
 ### Fixed

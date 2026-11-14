@@ -46,8 +46,8 @@ Deno, Bun and Cloudflare Workers, no native code. Its whole API comes through th
 so you never import `@gizmodata/chargewire` yourself. For a Chargewire server other than
 Hardcharger, use `@gizmodata/chargewire` directly.
 
-> **Status: 2.4.5, with Hardcharger 2.7.0.** Built on `@gizmodata/chargewire` 2.3.6 (chargewire-js
-> `ec4ba68`, Chargewire protocol 1.0.0); tested against `hardcharger-server` from Hardcharger's main
+> **Status: 2.5.0, with Hardcharger 2.13.0.** Built on `@gizmodata/chargewire` 2.4.0 (chargewire-js
+> `30ed33b`, Chargewire protocol 1.0.0); tested against `hardcharger-server` from Hardcharger's main
 > branch.
 
 | Package                               | What it is                                                              |
@@ -207,6 +207,33 @@ const conn = await connect({
 });
 ```
 
+## 🔒 Read-only connections
+
+```ts
+import { connect } from "@gizmodata/hardcharger";
+
+const conn = await connect({
+  url,
+  username,
+  password,
+  sessionOptions: { read_only: true },
+});
+try {
+  console.log((await conn.query("SELECT 42 AS answer")).toArray());
+} finally {
+  await conn.close();
+}
+```
+
+Use your connection details for `url`, `username` and `password`. The client requires
+`options.read_only: true` from the server before using the session. You can also call
+`await conn.setOptions({ read_only: true })` on an existing connection. The restriction
+is one-way; open a separate connection to write. Lazy connections confirm on their
+first operation, and replacement sessions request and confirm the restriction again.
+Older servers that reject or ignore the option cause an error, never a writable fallback.
+Connections that omit it continue to work with older servers. Read-only does not grant
+additional permissions or sandbox administrator-installed extension code.
+
 ## 🪪 Client certificate sign-in (mutual TLS)
 
 When the server verifies client certificates and lets them sign in, the certificate is the
@@ -353,7 +380,7 @@ Node 22.19 or later. For development and CI, `@gizmodata/chargewire` is built fr
 [gizmodata/chargewire-js](https://github.com/gizmodata/chargewire-js) at the commit pinned in
 [scripts/chargewire-js.commit](scripts/chargewire-js.commit) and packed to `.chargewire/`, where
 `package-lock.json` finds it, so the tests run against that exact client. `package.json`, and so
-the published package, names the npm package and its range (`^2.1.0`); the tarball is a stand-in
+the published package, names the npm package and its range (`^2.4.0`); the tarball is a stand-in
 for development and CI only.
 
 ```bash
@@ -397,7 +424,9 @@ chargewire-js anonymously over https.
 ## 📦 Releasing
 
 Releases follow [semantic versioning](https://semver.org) and [CHANGELOG.md](CHANGELOG.md):
-update both and `package.json`'s version, commit, and push `main` and `vX.Y.Z` together.
+update both and `package.json`'s version, then merge a pull request after its required checks pass.
+Fetch `origin/main`, verify its tree matches the tested commit, and tag that exact landed commit
+`vX.Y.Z`. Push the release tag without moving it afterward.
 `release.yml` runs the full CI on the tagged commit, then makes a GitHub Release with the
 package tarball and the CHANGELOG section, then publishes to npm (public) with trusted
 publishing (OIDC, no stored token) when the repository variable `NPM_PUBLISH_ENABLED` is `true`.
