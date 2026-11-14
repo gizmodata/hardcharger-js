@@ -207,6 +207,33 @@ const conn = await connect({
 });
 ```
 
+## 🔒 Read-only connections
+
+```ts
+import { connect } from "@gizmodata/hardcharger";
+
+const conn = await connect({
+  url,
+  username,
+  password,
+  sessionOptions: { read_only: true },
+});
+try {
+  console.log((await conn.query("SELECT 42 AS answer")).toArray());
+} finally {
+  await conn.close();
+}
+```
+
+Use your connection details for `url`, `username` and `password`. The client requires
+`options.read_only: true` from the server before using the session. You can also call
+`await conn.setOptions({ read_only: true })` on an existing connection. The restriction
+is one-way; open a separate connection to write. Lazy connections confirm on their
+first operation, and replacement sessions request and confirm the restriction again.
+Older servers that reject or ignore the option cause an error, never a writable fallback.
+Connections that omit it continue to work with older servers. Read-only does not grant
+additional permissions or sandbox administrator-installed extension code.
+
 ## 🪪 Client certificate sign-in (mutual TLS)
 
 When the server verifies client certificates and lets them sign in, the certificate is the
